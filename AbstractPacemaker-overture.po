@@ -1,0 +1,35 @@
+Proof Obligation 1: (Unproved)
+FaultyHeart: type compatibility obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 30:22
+(((len tr) = 100) => (aperiod > 0))
+
+Proof Obligation 2: (Unproved)
+FaultyHeart: type compatibility obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 31:26
+(((len tr) = 100) => (Periodic(tr, <A>, aperiod) => (aperiod > 0)))
+
+Proof Obligation 3: (Unproved)
+FaultyHeart: operation postcondition satisfiable obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 28:1
+(exists tr:Trace & post_FaultyHeart(oldstate, tr, oldstate, newstate))
+
+Proof Obligation 4: (Unproved)
+Periodic: legal sequence application obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 38:7
+(forall tr:Trace, e:Event, p:nat1 & (forall t in set (inds tr) & (t in set (inds tr))))
+
+Proof Obligation 5: (Unproved)
+Periodic: legal sequence application obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 40:8
+(forall tr:Trace, e:Event, p:nat1 & (forall t in set (inds tr) & ((tr(t) = e) => (((t + p) <= (len tr)) => ((t + p) in set (inds tr))))))
+
+Proof Obligation 6: (Unproved)
+Periodic: legal sequence application obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 41:44
+(forall tr:Trace, e:Event, p:nat1 & (forall t in set (inds tr) & ((tr(t) = e) => (((t + p) <= (len tr)) => ((tr((t + p)) = e) => (forall i in set {(t + 1), ... ,((t + p) - 1)} & (i in set (inds tr))))))))
+
+Proof Obligation 7: (Unproved)
+Periodic: legal sequence application obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 44:45
+(forall tr:Trace, e:Event, p:nat1 & (forall t in set (inds tr) & ((tr(t) = e) => (((t + p) <= (len tr)) => (((tr((t + p)) = e) and (forall i in set {(t + 1), ... ,((t + p) - 1)} & (tr(i) <> e))) => (((t + p) > (len tr)) => (forall i in set {(t + 1), ... ,(len tr)} & (i in set (inds tr)))))))))
+
+Proof Obligation 8: (Unproved)
+Pace: legal sequence application obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 55:44
+(forall tr:Trace, aperi:nat1, vdel:nat1, oldstate:DEFAULT`Pacemaker & (forall i in set (inds (tl tr)) & (((i mod aperi) = (vdel + 1)) => (i in set (inds tr)))))
+
+Proof Obligation 9: (Unproved)
+Pace: non-empty sequence obligation @ in 'DEFAULT' (AbstractPacemaker.vdmsl) at line 58:29
+(forall tr:Trace, aperi:nat1, vdel:nat1, oldstate:DEFAULT`Pacemaker & (tr <> []))
