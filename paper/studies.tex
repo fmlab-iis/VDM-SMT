@@ -344,7 +344,7 @@ $\bullet$ PO14 is an enumeration map injectivity obligatoin of the operation {\t
 \end{Verbatim}
 \end{mdframed}
 
-We negated PO14 so that the {\tt forall} quantifiers are removed. To encode the negated formula of PO14, similar technique for  encoding {\tt set (dom status)} for PO1 can be applied. For the range restriction function, since the range is a single set with value {\tt <WR>}, there is no need of applying set notations but limiting the map value {\tt status(r)} to {\tt <WR>}. Thus, {\tt r in set (dom (status :> \{<WR>\}))} is encoded as follows.
+We negated PO14 so that the {\tt forall} quantifiers are removed. To encode the negated formula of PO14, similar technique for  encoding {\tt set (dom status)} for PO1 can be applied. For the range restriction function, since the range is a singleton set with element value of {\tt <WR>}, we can skip encoding set notations while limiting the map value {\tt status(r)} to {\tt <WR>}. Thus, {\tt r in set (dom (status :> \{<WR>\}))} is encoded as follows.
 
 \begin{mdframed}[roundcorner=5pt,shadow=true]
 \begin{Verbatim}[fontsize=\small]
@@ -354,7 +354,7 @@ status(r)==
 \end{Verbatim}
 \end{mdframed}
 
-For the map inverse function, we encoded {\tt m1 = \{(inverse calls)(r) |-> <SI>\}} as multiple conditions: (1) the part of map, where key {\tt i} is used and inverse is applied, should be defined; (2) the inversed domain, i.e., the range of original map, is {\tt r}; (3) then {\tt m1(i)} is {\tt <SI>}; (4) for all other indexes, {\tt m1} should be undefined.
+For the map inverse function, we chose not to define a new map as the inverse of {\tt calls}, but encoded {\tt m1 = \{(inverse calls)(r) |-> <SI>\}} as a case of {\tt m1 in set \{\{r |-> <SR>\}, \{(inverse calls)(r) |-> <SI>\}\}}. The case was encoded as the collection of several conditions. 
 
 \begin{mdframed}[roundcorner=5pt,shadow=true]
 \begin{Verbatim}[fontsize=\small]
@@ -365,28 +365,64 @@ Subscriber_lift.get_subscriber(calls(i))==r
 
 m1(i)==Status_lift.STATUS(
          Status.INITIATOR(Initiator.SI)),
+
 ForAll(k, 
   Implies(k!=i, m1(k)==Status_lift.NDF) )
 \end{Verbatim}
 \end{mdframed}
 
-The result of checking PO14 ware expected to be {\tt unsat} but we got {\tt sat} and a model that satisfies the formula and constraints. 
+In above code, the first two conditions promise that (1) the part of map, where key {\tt i} is used and inverse is applied, has to be defined; (2) the domain of the inversed map, i.e., the range of the original map, is {\tt r}. Then {\tt m1(i)} where key {\tt i} is referred should be {\tt <SI>}. Finally the last condition guarantees that {\tt m1} should be undefined for all indexes except {\tt i}.
 
+Recall that {\tt calls} is defined as {\tt inmap}, a one-to-one map. Thus, we had to add  the conditions about {\tt inmap} as context information: for any two different users, either both users calls no one (undefined) or they are calling different users.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+k  = Const('k',Subscriber)
+l  = Const('l',Subscriber)
+ForAll([k,l],
+  If(
+    k==l,
+    calls(k)==calls(l),
+    Or(
+      And(
+        calls(k)==Subscriber_lift.NDF,
+        calls(l)==Subscriber_lift.NDF
+      ),
+      calls(k)!=calls(l)
+    )
+  )
+)
+\end{Verbatim}
+\end{mdframed}
+
+The result of checking PO14 (negated) ware expected to be {\tt unsat}, but we got {\tt sat}. Z3 returned a model that satisfies the negated formula and constraints so that we could examine where is the problem. We found that {\tt calls} in the returned model is a map where users calls themselves. This does not violate the type of {\tt inmap}, but an user cannot call him/her-self in a telephone exchange system. Therefore, the checking of PO14 suggested that the VDM-SL model should add a constraint on {\tt calls}. As an example of correction, we may add the constraint below as the type invariant of {\tt calls} or the additional state invariant\footnote{We have added the constraint and checked again, and the PO was proved successfully.}.
+
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+forall i in set dom calls & calls(i) != i
+\end{Verbatim}
+\end{mdframed}
+
+In this case study, we did not check all the 27 POs since the encoding could not cover all POs. The main issue is that the maps are encoded as uninterpreted functions so that {\tt forall} quantifier cannot be applied. This results that we could not check the postcondition satisfiable obligations of this model\footnote{Besides postcondition satisfiable obligations, there are two POs with type check function {\tt is\_(name, type)}, for which Z3 encoding is not available and then skipped.}. Finally, we checked 16 out of all 27 POs.
 
 \subsection{Discussion}
 
-Overture generated 27 POs for this model. These POs can be divided into several groups as showed below. In this case study we encoded and checked the first three groups using the above encoding of types. The reason of not handling the postcondition obligations is that the maps defined using uninterpreted functions cannot be used together with quantifiers. Also, map inverse obligations have {\tt is\_(name, type)}, the function of type check provided by VDM, in their formulas. There is no appropriate encoding for such type check functions in Z3. 
+% Overture generated 27 POs for this model. These POs can be divided into several groups as showed below. In this case study we encoded and checked the first three groups using the above encoding of types. The reason of not handling the postcondition obligations is that the maps defined using uninterpreted functions cannot be used together with quantifiers. Also, map inverse obligations have {\tt is\_(name, type)}, the function of type check provided by VDM, in their formulas. There is no appropriate encoding for such type check functions in Z3. 
 
-\begin{enumerate}
-\item
-Legal map application obligations, invariant satisfiable obligations: 1 to 7.
-\item
-Enumeration map injectivity obligations: 9, 14, 18, 21, 25.
-\item
-Legal map application obligations with inverse map: 12, 17, 20, 23.
-\item
-Operation postcondition satisfiable obligations: 8, 10, 11, 15, 16, 19, 22, 26, 27
-\item
-Map inverse obligations: 13, 24.
-\end{enumerate}
+% \begin{enumerate}
+% \item
+% Legal map application obligations, invariant satisfiable obligations: 1 to 7.
+% \item
+% Enumeration map injectivity obligations: 9, 14, 18, 21, 25.
+% \item
+% Legal map application obligations with inverse map: 12, 17, 20, 23.
+% \item
+% Operation postcondition satisfiable obligations: 8, 10, 11, 15, 16, 19, 22, 26, 27
+% \item
+% Map inverse obligations: 13, 24.
+% \end{enumerate}
+
+Points of discussion:
+(1) Automation: Is the encoding can be automated? partly or fully? 
+(2) Guidance and patterns: What patterns are repeated used in encoding? Any guide of encoding?
 
