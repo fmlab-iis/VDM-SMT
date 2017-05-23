@@ -215,16 +215,16 @@ The results of all nine POs of the Abstracted Pacemaker VDM-SL model is showed i
 \begin{center}
 \begin{tabular}{|c|c|r|r|}
 \hline
-PO\#	&	negated?	&	result	&	time (sec.) \\ \hline
-1		&	Y			&	sat		&	0.031 \\ \hline
-2		&	Y			&	unsat	&	0.031 \\ \hline
-3		&	N			&	sat		&	15.109 \\ \hline
-4		&	Y			&	unsat	&	0.032 \\ \hline
-5		&	Y			&	unsat	&	0.046 \\ \hline
-6		&	Y			&	unsat	&	0.048 \\ \hline
-7		&	Y			&	unsat	&	0.062 \\ \hline
-8		&	Y			&	unsat	&	0.031 \\ \hline
-9		&	Y			&	sat		&	0.047 \\ \hline
+PO\#	&	negated	&	result	&	time (sec.) \\ \hline
+1		&	Y		&	sat		&	0.031 \\ \hline
+2		&	Y		&	unsat	&	0.031 \\ \hline
+3		&	N		&	sat		&	15.109 \\ \hline
+4		&	Y		&	unsat	&	0.032 \\ \hline
+5		&	Y		&	unsat	&	0.046 \\ \hline
+6		&	Y		&	unsat	&	0.048 \\ \hline
+7		&	Y		&	unsat	&	0.062 \\ \hline
+8		&	Y		&	unsat	&	0.031 \\ \hline
+9		&	Y		&	sat		&	0.047 \\ \hline
 \end{tabular}
 \end{center}
 \caption{Absract Pacemaker Result}
@@ -394,6 +394,7 @@ ForAll([k,l],
 )
 \end{Verbatim}
 \end{mdframed}
+\medskip
 
 The result of checking PO14 (negated) ware expected to be {\tt unsat}, but we got {\tt sat}. Z3 returned a model that satisfies the negated formula and constraints so that we could examine where is the problem. We found that {\tt calls} in the returned model is a map where users calls themselves. This does not violate the type of {\tt inmap}, but an user cannot call him/her-self in a telephone exchange system. Therefore, the checking of PO14 suggested that the VDM-SL model should add a constraint on {\tt calls}. As an example of correction, we may add the constraint below as the type invariant of {\tt calls} or the additional state invariant\footnote{We have added the constraint and checked again, and the PO was proved successfully.}.
 

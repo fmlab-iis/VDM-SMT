@@ -4,7 +4,7 @@
 The Vienna Development Method (VDM) was originally developed in the 1970's at the IBM laboratories in Vienna~\cite{DBLP:conf/fm/1978}. The VDM Specification Language (VDM-SL) is a higher-order language with formally defined syntax and semantics~\cite{Prehn:1991:LNCS551,Larsen1995585}. VDM provides various abstract data types: basic types such as booleans, natural numbers, and tokens; advanced types such as record, product, set, and map. Typed variables (state) may be restricted by invariants and operations/functions may be specified with preconditions and postconditions.
 
 % Explaining the sample VDM-SL model: part1
-As a brief explanation of VDM-SL, Fig.~\ref{fig:module_sample} shows a sample VDM-SL model {\tt CMDS}. The specification is divided into several blocks: types (line 1-4), state (line 6-12), operations (line 14-18), and functions (line 20-27). {\tt CMD} is a union type of quotes which is usually used for enumeration. {\tt CMD} represents commands {\tt <R>} and {\tt <L>} which may be recognized as right and left. {\tt CMD\_series} is defined as a sequence type which is a list of commands. Note that the type of elements {\tt [CMD]} with square brackets means the union type {\tt POS|nil}. We also defined a map type for counting the occurrences of commands. The state of the model is defined as a sequence of commands {\tt CMD\_series} and its initial value is defined as empty. Its invariant specifies that adjacent elements of {\tt commands} have to be different. The invariant is specified with {\tt forall} quantifier and {\tt len} operation that returns the length of a sequence.
+As a brief explanation of VDM-SL, Fig.~\ref{fig:module_sample} shows a sample VDM-SL model {\tt CMDS}. The specification is divided into several blocks: types (lines 1-4), state (lines 6-12), operations (lines 14-18), and functions (lines 20-27). {\tt CMD} is a union type of quotes which is usually used for enumeration. {\tt CMD} represents commands {\tt <R>} and {\tt <L>} which may be recognized as right and left. {\tt CMD\_series} is defined as a sequence type which is a list of commands. Note that the type of elements {\tt [CMD]} with square brackets means the union type {\tt POS|nil}. We also defined a map type for counting the occurrences of commands. The state of the model is defined as a sequence of commands {\tt CMD\_series} and its initial value is defined as empty. Its invariant specifies that adjacent elements of {\tt commands} have to be different. The invariant is specified with {\tt forall} quantifier and {\tt len} operation that returns the length of a sequence.
 
 
 % An example of VDM-SL model (or some segments of VDM-SL code) should have
@@ -46,9 +46,10 @@ functions
   };
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
 \caption{A sample VDM-SL specification: CMDS}
 \label{fig:module_sample}
-\vspace{-25pt}
+% \vspace{-25pt}
 \end{center}
 \end{figure}
 

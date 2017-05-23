@@ -1,0 +1,21 @@
+% Explain the encode strategy: (1) explain Z3 and python API; (2) strategy on types; (3) take negation or not
+
+% Z3 introduction, API introduction
+As mentioned in Section~\ref{section:introduction}, our approach encodes and prove VDM POs with the Z3 SMT solver~\cite{MB:08:ZSS}. Z3 is one of the popular SMT solver wildly used in verification of programs and software systems. Z3 has APIs for major programming languages such as C, Java, and Python. The APIs provide a better way of constructing SMT formulas than SMT-LIB~\cite{BarFT-SMTLIB} because one can adopt the flow control characteristics like loop and if-then-else of programming languages to build and solve formulas in a flexible and smart way than using pure SMT-LIB format. In our approach, we chose Z3's Python API (Z3py) as the encoding environment. 
+
+% Issues of encoding
+VDM has rich types such as natural number, quote, sequence, and mapping and there are no direct matching to types in Z3. For example, to encode a natural number, we need to declare an integer and then add a constraint of greater and equal to zero on it. The enumeration in Z3 can be used to encode simple quote types. For complex types, we may use uninterpreted functions or arrays to capture the characteristic and operators of the type we want to encode. There is not yet a systematic way of encoding VDM types to Z3 so we have to choose the encoding carefully based on the types and expressions used in a VDM-SL model. However, it is expected that we may find some patterns of encoding for frequent seen styles in VDM-SL models.
+
+% Demonstrate Z3Py encoding
+For more details, the Z3py encoding firstly needs to include the Z3 module and declare a solver object. We can add constraints of a PO to the solver object and solve the formulas for proof.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+  from z3 import *
+  s = Solver()
+  i = Int('i')
+  s.add(i>=0)
+\end{Verbatim}
+\end{mdframed}
+
+The above Python code imports the z3 module and create a solver object, then declare an integer {\tt i} with a constraint that {\tt i} is greater and equal to zero. In this case, {\tt i} is the encoding an instance of type {\tt nat} in VDM. Note that we cannot define a user-defined type in Z3 but only can declare every instance as Z3 type and add necessary constraints to achieve the encoding of variables of VDM types. This means that if there are several variables declared as VDM type that Z3 does not have, instances of the same number of VDM variables have to be declared in Z3 with constraints for each instance added to the solver object. In Section~\ref{section:case-studies}, we will show more details of the encoding through the explanation of case studies.
