@@ -23,7 +23,7 @@ For pre- and post-conditions of a function/operation specified in the VDM model,
 If a PO only considers a part of the specification of a type, function, or an operations, it is only needed to encode the expressions that are directly used in the PO. In other words, if a type, a function, or an operation is not directly used such as variables of the type, evaluation using the function or the operation, there is no need to encode the full specification of the type, the function, or the operation.
 \end{enumerate}
 \item
-Quantifier elimination and obligation negation
+Obligation negation quantifier elimination
 \begin{enumerate}
 \item
 Obligation negation: In model checking with SMT solvers, the assertion to be checked is usually negated, and the result of unsat is expected and means the proof of the assertion succeeds. For the result of sat which means the assertion can be violated, we can get a model as the counterexample that shows the information of how the assertion is violated. In this work, we also take negation on the PO to be discharged. However, the elimination of forall quantifier should be considered together when applying the negation to the PO.
