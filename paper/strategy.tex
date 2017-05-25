@@ -1,10 +1,39 @@
 % Explain the encode strategy: (1) explain Z3 and python API; (2) strategy on types; (3) take negation or not
 
 % Z3 introduction, API introduction
-As mentioned in Section~\ref{section:introduction}, our approach encodes and prove VDM POs with the Z3 SMT solver~\cite{MB:08:ZSS}. Z3 is one of the popular SMT solver wildly used in verification of programs and software systems. Z3 has APIs for major programming languages such as C, Java, and Python. The APIs provide a better way of constructing SMT formulas than SMT-LIB~\cite{BarFT-SMTLIB} because one can adopt the flow control characteristics like loop and if-then-else of programming languages to build and solve formulas in a flexible and smart way than using pure SMT-LIB format. In our approach, we chose Z3's Python API (Z3py) as the encoding environment. 
+As mentioned in Section~\ref{section:introduction}, our approach encodes and prove VDM POs with the Z3 SMT solver~\cite{MB:08:ZSS}. Z3 is one of the popular SMT solver wildly used in verification of programs and software systems. Z3 has APIs for major programming languages such as C, Java, and Python. The APIs provide a better way of constructing SMT formulas than SMT-LIB~\cite{BarFT-SMTLIB} because one can adopt the flow control characteristics like loop and if-then-else of programming languages to build and solve formulas in a flexible and smart way. In our approach, we chose Z3's Python API (Z3py) as the encoding environment. 
 
-% Issues of encoding
-VDM has rich types such as natural number, quote, sequence, and mapping and there are no direct matching to types in Z3. For example, to encode a natural number, we need to declare an integer and then add a constraint of greater and equal to zero on it. The enumeration in Z3 can be used to encode simple quote types. For complex types, we may use uninterpreted functions or arrays to capture the characteristic and operators of the type we want to encode. There is not yet a systematic way of encoding VDM types to Z3 so we have to choose the encoding carefully based on the types and expressions used in a VDM-SL model. However, it is expected that we may find some patterns of encoding for frequent seen styles in VDM-SL models.
+% steps of encoding
+% 1. check context information: types, functions, and operations involved in the obligation
+% 2. encode context information: types and type invariants, functions, and operations (pre- and post-conditions if needed)
+% 3. negation and forall quantifier elimination
+Currently, the encoding is manually performed based on the obligation to be discharged and below are the steps of encoding and solving an obligation with SMT solvers.
+
+\begin{enumerate}
+\item
+Determine the context information of the PO: The context information is the definitions specified in the VDM model that are involved in the obligation. The context information may include types, functions, and operations. Note that if a type is involved, its type invariant should be included, too.
+\item
+Encode context information: this step encodes the context information determined by the first step, and can be divided into several minor steps.
+\begin{enumerate}
+\item
+For a VDM type in the context information, both the type itself and its invariant have to be encoded.
+\item
+For pre- and post-conditions of a function/operation specified in the VDM model, the encoding is needed if {\tt pre\_<name>} or {\tt post\_<name>} are used in the PO. For example, the postcondition satisfiable obligation (PO7) of the {\tt CMDS} module described in Section~\ref{section:proof-obligations} used both precondition and postcondition.
+\item
+If a PO only considers a part of the specification of a type, function, or an operations, it is only needed to encode the expressions that are directly used in the PO. In other words, if a type, a function, or an operation is not directly used such as variables of the type, evaluation using the function or the operation, there is no need to encode the full specification of the type, the function, or the operation.
+\end{enumerate}
+\item
+Quantifier elimination and obligation negation
+\begin{enumerate}
+\item
+Obligation negation: In model checking with SMT solvers, the assertion to be checked is usually negated, and the result of unsat is expected and means the proof of the assertion succeeds. For the result of sat which means the assertion can be violated, we can get a model as the counterexample that shows the information of how the assertion is violated. In this work, we also take negation on the PO to be discharged. However, the elimination of forall quantifier should be considered together when applying the negation to the PO.
+\item
+Elimination of forall quantifiers: POs of VDM usually have forall quantifiers. To solve the formulas with forall quantifiers in Z3, though Z3 accepts formulas with forall quantifiers, there are limitations and we may need to eliminate forall quantifiers that may cause problem before encoding. In this work, forall quantifier usually causes difficulties in encoding and solving when complex types are involved. Obligation negation described above may achieve the elimination of troublesome foall quantifiers. However, obligation negation should be applied carefully not to introduce troublesome forall quantifiers from exists quantifiers.
+\end{enumerate}
+\end{enumerate}
+
+% More details of encoding types, operators, and expressions
+VDM has rich types such as natural number, quote, sequence, and mapping, and there are no direct matching for all VDM types to the types in Z3. For example, to encode a natural number, we need to declare an integer and then add a constraint of greater and equal to zero because there is no natural number type in Z3. Also, the enumeration in Z3 can be used to encode simple quote types. For complex types like sequences, maps, or records, we may use uninterpreted functions or arrays to capture the characteristic and operators of the types we want to encode. At this point, there is not yet a complete and systematic way of encoding VDM types to Z3, what we can do is to choose the encoding carefully based on the types and expressions in a VDM model. However, based on our case studies, there are some patterns of encoding that are frequently used for corresponding expression styles in VDM-SL models.
 
 % Demonstrate Z3Py encoding
 For more details, the Z3py encoding firstly needs to include the Z3 module and declare a solver object. We can add constraints of a PO to the solver object and solve the formulas for proof.
@@ -18,4 +47,9 @@ For more details, the Z3py encoding firstly needs to include the Z3 module and d
 \end{Verbatim}
 \end{mdframed}
 
-The above Python code imports the z3 module and create a solver object, then declare an integer {\tt i} with a constraint that {\tt i} is greater and equal to zero. In this case, {\tt i} is the encoding an instance of type {\tt nat} in VDM. Note that we cannot define a user-defined type in Z3 but only can declare every instance as Z3 type and add necessary constraints to achieve the encoding of variables of VDM types. This means that if there are several variables declared as VDM type that Z3 does not have, instances of the same number of VDM variables have to be declared in Z3 with constraints for each instance added to the solver object. In Section~\ref{section:case-studies}, we will show more details of the encoding through the explanation of case studies.
+The above Python code imports the z3 module and create a solver object, then declare an integer {\tt i} with a constraint that {\tt i} is greater and equal to zero. In this case, {\tt i} is the encoding an instance of type {\tt nat} in VDM. Note that we cannot define a user-defined type in Z3 but only can declare every instance as Z3 type and add necessary constraints to achieve the encoding of variables of VDM types. This means that if there are several variables declared as VDM type that Z3 does not have, instances of the same number of VDM variables have to be declared in Z3 with constraints for each instance added to the solver object. The strategies discussed above will be demonstrated with details in Section~\ref{section:case-studies} through the report of case studies.
+
+
+% Z3py encoding: taking negation and forall quantifier elimination
+% Besides the encoding of VDM types, 
+%  For example, if a VDM type is encoded as an uninterpreted function, the type cannot be used within forall quantifier. A simple way of quantifier elimination is negation the formula so the forall quantifier turns into exists quantifier which can be omitted in SMT formulas usually. 
