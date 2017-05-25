@@ -1,24 +1,71 @@
-This section gives studies that apply our encoding to selected VDM-SL models and discusses the results. All the selected VDM-SL models are from the Overture repository\footnote{a url link here}.
+This section gives studies that apply our encoding to selected VDM-SL models and discusses the results. All the selected VDM-SL models can be found in Overture repository\footnote{http://overturetool.org/download/examples/VDMSL/}.
 
 \subsection{Abstract Pacemaker}
 
-This model specifies an abstract pacemaker with some core functionalities of pulse trace selection\footnote{This model was developed by Sten Agerholm et al. in 1999 in connection with FM'99}. The data types used in the model are defined as follows:
-% The model is described in VDM-SL as a short, flat specification. This enables abstraction from design considerations and ensures maximum focus on high-level, precise and systematic analysis
+The first case is a small VDM-SL model specifies an abstract pacemaker. The model is not a full specification and focuses on part of definitions and operations related to heartbeat signals detected and recorded in a pacemaker. For this model of 58 lines, Overture generated nine POs. Here we report two the encoding and solving of obligations PO8 and PO3 for this case.
+
+\subsubsection{Proof Obligation 8}
+
+PO8 shown in Fig.~\ref{fig:po8_case1} is a legal sequence application obligation of operation {\tt Pace}.  PO8 requires that the formulas specified with trace {\tt tr} of type {\tt Trace} be legal, i.e., computable to get its result. For more understanding of PO8, we may take a look on the definition of the operation {\tt Pace} as shown in Fig.~\ref{fig:pace_case1}. {\tt Pace} is an explicitly specified operation and takes three inputs of types {\tt Trace}, {\tt nat1}, and {\tt nat1}. It is easy to recognize that PO8 is checking about the sequence used in line 4 in Fig.~\ref{fig:pace_case1}. Note that to discharge PO8, we do not need the full definition of {\tt Pace}.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+(forall tr:Trace, aperi:nat1, vdel:nat1,
+  oldstate & 
+    (forall i in set (inds (tl tr)) &
+      (((i mod aperi) = (vdel + 1)) =>
+        (i in set (inds tr)))
+))
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Proof Obligation 8 of Abstract Pacemaker}
+\label{fig:po8_case1}
+\end{center}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+Pace: Trace * nat1 * nat1 ==> Trace
+Pace(tr,aperi,vdel) ==
+  return [nil] ^
+     [ if (i mod aperi = vdel + 1) and
+          tr(i) <> <V> 
+       then <V> else nil
+     | i in set inds tl tr];
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Pace of Abstract Pacemaker}
+\label{fig:pace_case1}
+\end{center}
+\end{figure}
+
+As mentioned in Section~\ref{section:proof-obligations}, PO8 is the formula to be proved and we need to include the context information related to the obligation as the first step of encoding described in Section~\ref{section:encode-strategy}. To decide what to include as the context information, we firstly examine the types used in PO8 and we have {\tt nat1} and {\tt Pace}. {\tt nat1} is a type of natural numbers that excludes zero and thus starts from one. {\tt nat1} is a primitive type of VDM so we do not need more information about it. {\tt Pace} is a user-defined type so we have check its definition in the VDM-SL model. The type definition of {\tt Trace} in the model is as follows. Note that {\tt oldstate} bounded by the forall quantifier is used in the expression of PO8 and therefore is ignored in the encoding.
 
 \begin{mdframed}[roundcorner=5pt]
 \begin{Verbatim}[fontsize=\small]
   Trace = seq of [Event];
   Event = <A> | <V>;
-
-  state Pacemaker of
-    aperiod : nat 
-    vdelay  : nat
-  init p == p = mk_Pacemaker(15,10)
-  end
 \end{Verbatim}
 \end{mdframed}
 
-{\tt Trace} is of sequence type of {\tt Event}, where {\tt Event} is of quote type with two values {\tt <A>} and {\tt <V>}. The state is defined as two natural numbers with initial value of {\tt (15,10)}. In Z3, natural numbers is encoded as positive integers (integers with constraint of greater and equal to zero); quote type can be encoded as enumeration type {\tt EnumSort}; sequence type can be encoded as {\tt ArraySort}. The definitions of {\tt Event} and {\tt Trace} are as follows:
+Now we know that {\tt Trace} is of sequence type of {\tt Event}, where {\tt Event} is of quote type with two values {\tt <A>} and {\tt <V>} that are stand for the A-pace and V-pace of heartbeat signals. At this point, we have necessary context information we need to discharge PO8 and we may proceed to encoding step. For discharging PO3, we need to encode types used in PO8: {\tt nat1} and {\tt Trace}. {\tt nat1} is the natural number that excludes zero, so the encoding of {\tt nat1} is as follows. 
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+  aperi = Int('aperi')
+  s.add(aperi>=1)
+  vdel = Int('vdel')
+  s.add(vdel>=1)
+\end{Verbatim}
+\end{mdframed}
+
+As the above code shows, we defined two instances of integer in Z3, {\tt aperi} and {\tt vdel}, then the constraint of greater and equal to one is added into the solver object for both instances. Note that in Z3, we cannot add constraints to types but instances of a Z3 type. This has been mentioned in Section~\ref{section:encode-strategy}. The remaining type not encoded yet is {\tt Trace}, the sequence type. We defined {\tt Event} firstly since {\tt Trace} is a trace of {\tt Event}. The code below shows the encoding of {\tt Event} and {\tt Trace}. Since {\tt Trace} is not exactly the sequence of {\tt Event} but {\tt [Event]} (a union with {\tt nil}, we did not define {\tt Event} but define {\tt [Event]}. Also, because VDM uses partial functions, a type can be undefined. This means that besides ordinary values as specification shows, we have to consider the case that the value is not defined. In our work, we used {\tt NDF} to represent the undefined value of {\tt Event}, and define {\tt Event\_lift} in Z3. The {\tt \_lift} indicates that we have considered the undefined value.
 
 \begin{mdframed}[roundcorner=5pt,shadow=true]
 \begin{Verbatim}[fontsize=\small]
@@ -30,10 +77,12 @@ This model specifies an abstract pacemaker with some core functionalities of pul
 \end{Verbatim}
 \end{mdframed}
 
-Because VDM uses partial functions, to encode as SMT formulas in Z3, we need to lift {\tt Event} to include the undefined case {\tt NDF}. Also, square brackets of {\tt [Evnet]} means the value can be {\tt nil}. Furthermore, since {\tt Trace} is defined as an array in Z3, we added constraints that limit an array as a sequence. Note that in Z3, the constraints are applied on each instance of type {\tt Trace} ({\tt tr} in the following formulas), not on the type itself.
+In the above encoding, {\tt Trace} is encoded as an array type in Z3 and this array type is by default indexed through the integer domain. An array type can not be a sequence type unless we add constraints regarding to sequences to limit an array to a sequence. The idea of adding constraints is the same as the encoding of {\tt nat1} but more complicate. Fig.~\ref{fig:tr_constraint_case1} shows the encoding of the constraint to {\tt tr}, the instance of {\tt Trace} as an array. Note again that the constraints are applied on {\tt tr}, the instance of {\tt Trace}, not the type {\tt Trace}. In Fig.~\ref{fig:tr_constraint_case1}, we added three constraints: 
 
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
+\begin{Verbatim}[fontsize=\small,numbers=left]
   tr = Const('tr',Trace)
   [i,j] = Ints('i j')
 
@@ -58,28 +107,29 @@ Because VDM uses partial functions, to encode as SMT formulas in Z3, we need to 
   )
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
+\caption{Encode constraints for {\tt tr:Trace} in Z3py}
+\label{fig:tr_constraint_case1}
+\end{center}
+\end{figure}
 
-The first constraint says that the all indexes of {\tt tr} below 1 should be undefined because in VDM-SL, a sequence's index starts from 1. The second constraint says that if an index is defined, i.e., not undefined, all indexes lower than it should be all defined. The third constraint says tat if an index is undefined, all indexes higher than it should be all undefined. From the above three constraints, we limited an array as a sequence that starts from index 1 to its last element. 
 
-% \begin{itemize}
-% \item
-% A sequence's index is from 1, so indexes below 1 ($<=0$) should be all undefined.
-% $\forall i \in \mathcal{Z}, i<=0. ~tr[i] = NDF $
-% \item
-% If an index is defined in the sequence, all indexes lower then it should be all defined.
-% $\forall i \in \mathcal{Z}. ~tr[i] \neq NDF \rightarrow (\forall j \in \mathcal{Z}, 1<=j \land j <= i. ~tr[j] \neq NDF)$
-% \item
-% If an index is undefined, all indexes higher then it should be all undefined.
-% $\forall i \in \mathcal{Z}. ~(i >= 1 \land tr[i] = NDF) \rightarrow (\forall j \in \mathcal{Z}, j >= i. ~tr[j] = NDF)$
-% \end{itemize}
 
-% where $NDF$ stands for undefined. The above formulas are added as constraints whenever the instance {\tt tr} of type {\tt Trace} is used.
+\begin{itemize}
+\item
+The first constraint (line 4) says that the all indexes of {\tt tr} below 1 should be undefined because in VDM-SL, a sequence's index starts from 1.
+\item
+The second constraint (lines 6-13) says that if an index is defined, i.e., not undefined, all indexes lower than it should be all defined.
+\item
+The third constraint (line 15-22) says tat if an index is undefined, all indexes higher than it should be all undefined.
+\end{itemize}
 
-Since in the VDM-SL model, the length function of a sequence is used, we also need to define the length function in Z3. Here we defined an uninterpreted function {\tt len\_tr} for {\tt tr} the instance of {\tt Trace}.
-% $(len\_tr(tr) = 0 \land tr[1] = 0) \lor (len\_tr(tr) > 0 \land tr[len\_tr(tr)] \neq NDF \land tr[len\_tr(tr)+1] = NDF$
+From the above three constraints, we limited an array ({\tt tr}) to a sequence that starts from index 1 to its last element. Now we have encoded both types {\tt nat1} and {\tt Trace} used in PO8 of the VDM-SL model. However, before proceed to encode the obligation, it is necessary to encode the function {\tt len} that computes the length of a sequence. As shown in Fig.~\ref{fig:tr_len_case1}, we defined an uninterpreted function {\tt len\_tr} for {\tt tr}, the instance of {\tt Trace}. Line 1 is the type declaration of {\tt len\_tr} which is an uninterpreted function accepting the input of a {\tt Trace} type and returning an integer type. Similar to defining constraints for {\tt tr:Trace}, we gave {\tt len\_tr} the constraint that consists of two cases: the length of a sequence can only be equal or greater than 0.
 
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
+\begin{Verbatim}[fontsize=\small,numbers=left]
 len_tr=Function('len_tr',Trace,IntSort())
 
 Or(
@@ -95,33 +145,23 @@ Or(
 )
 \end{Verbatim}
 \end{mdframed}
-
-{\tt len\_tr} is defined as an uninterpreted function that takes {\tt tr} as input and returns an integer indicates the length of {\tt tr}. Since the length of a sequence can only be equal or greater than 0, the constraint of {\tt len\_tr} is divided into two cases:
+\vspace{-10pt}
+\caption{Encode {\tt len\_tr} for {\tt tr:Trace} in Z3py}
+\label{fig:tr_len_case1}
+\end{center}
+\end{figure}
 
 \begin{enumerate}
 \item
-If {\tt len\_tr} returns 0, then {\tt tr} is an sequence with no element. That is, {\tt tr[1]} has to be undefined so that all indexes of {\tt tr} are then undefined based on previous constraints.
+If {\tt len\_tr} returns 0, then {\tt tr} is an sequence with no element. That is, {\tt tr[1]} has to be undefined so that all indexes of {\tt tr} are then undefined based on previous constraints of {\tt tr}. (lines 4-7)
 \item
-If {\tt len\_tr} returns an integer greater than 0, then {\tt tr} has defined elements till its length index {\tt len\_tr(tr)} such that the element at and after index {\tt len\_tr(tr)+1} should be undefined.
+If {\tt len\_tr} returns an integer greater than 0, then {\tt tr} has defined elements till its length index {\tt len\_tr(tr)} such that the element at and after index {\tt len\_tr(tr)+1} should be undefined. (line 8-12)
 \end{enumerate}
 
-We have defined the context information related to type {\tt Trace}. Now we can procceed to encode and prove the POs of the model. For this VDM-SL model, Overture generated nine POs. Most of the POs are similar so we only demonstrate PO8 and PO3.
+At this point, we have defined types and constraints needed for encoding PO8. According to the steps described in Section~\ref{section:encode-strategy}, we now proceed to the next step: obligation negation. The negated PO8 is shown in Fig.~\ref{fig:po8_negation_case1}. Compare to the original PO8 in Fig.~\ref{fig:po8_case1}, the negated PO8 also eliminated the forall quantifier so that we do not need to use forall in Z3py encoding. The PO can be recognized as the formula $\exists~[tr:Trace,aperi:nat1,vdel:nat1,i:nat] P \land Q \land \neg R$ where $P$, $Q$, and $\neg R$ can be encoded separately.
 
-$\bullet$ PO8 is a legal sequence application obligation of operation {\tt Pace} which is explicitly specified. This PO requires that the formulas specified with trace {\tt tr} be legal, i.e., computable to get its result.
-
-\begin{mdframed}[roundcorner=5pt]
-\begin{Verbatim}[fontsize=\small]
-(forall tr:Trace, aperi:nat1, vdel:nat1,
-  oldstate & 
-    (forall i in set (inds (tl tr)) &
-      (((i mod aperi) = (vdel + 1)) =>
-        (i in set (inds tr)))
-))
-\end{Verbatim}
-\end{mdframed}
-
-In PO8 showed above, {\tt tl tr} is the tail of {\tt tr}, and {\tt inds} is the operator of gathering indexes of defined elements of {\tt tr} as the set of natural numbers. To prove PO8, firstly we took negation of PO8 which results a quantifier eliminated formula.
-
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt]
 \begin{Verbatim}[fontsize=\small]
 Exists tr:Trace, aperi:nat1, vdel:nat1 &
@@ -133,19 +173,75 @@ Exists tr:Trace, aperi:nat1, vdel:nat1 &
   )
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
+\caption{Obligation negation of PO8}
+\label{fig:po8_negation_case1}
+\end{center}
+\end{figure}
 
-Note that the {\tt oldstate} is not used in the operation so that we remove it in the above formula. To encode the PO in Z3, the PO can be recognized as the formula $\exists~[tr:Trace,aperi:nat1,vdel:nat1,i:nat] P \land Q \land \neg R$ where $P$, $Q$, and $\neg R$ can be encoded separately.
 
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
+\begin{Verbatim}[fontsize=\small,numbers=left]
   And(aperi>=1,vdel>=1)        #nat1
   And(i>=1, i<=len_tr(tr)-1)   #P
   i%aperi==vdel+1              #Q
   Not(And(i>=1,i<=len_tr(tr))) #not R
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
+\caption{Encoded formulas of PO8 in Z3py}
+\label{fig:po8_encoded_case1}
+\end{center}
+\end{figure}
 
-In the encoding of $P$, the tail related formula can be encoded as in the range of $[1,(len~tr)-1]$ so that it is not required to define {\tt tl} and {\tt inds} for sequences. Finally, we checked the satisfiability of the encoded Z3 code and got {\tt unsat}, which means that the PO is proved since we have negated it.
+Finally, we encoded the negated PO8 as the Z3py code shown in Fig.~\ref{fig:po8_encoded_case1}. The encoding has four constraints: two {\tt nat1} variables (line 1); encoding of $P$ ({\tt i in set (inds (tl tr)}) that is actually indexes from 1 to {\tt len tr -1} (line 2); encoding of $Q$ ({\tt (i mod aperi) = (vdel + 1)}) (line 3); encoding of $\neg R$ ({\tt not(i in set (inds tr))}) (line 4). Note that {\tt hd} and {\tt tl tr} are operators of the head and tail of a sequence, and {\tt inds} is the operator of gathering indexes of defined elements of a sequence and returns a set of natural numbers. Also note that in the encoding in Fig.~\ref{fig:po8_encoded_case1}, we did not explicitly encode {\tt hd}, {\tt tl}, and {\tt inds} and simplified the results of these operators as constraints related to ranges (upper and lower bound) of {\tt tr}. The encoded PO8 (negated) was checked by the solver object in Z3py for the satisfiability. The result was {\tt unsat}, which means that PO8 is proved.
+
+% With the above two cases of {\tt len\_tr} that defines the length function of traces, together with constraints of {\tt tr}, and instances of types {\tt nat1}, we encoded PO8 as shown in  
+
+% The data types used in the model are defined as follows:
+
+% \begin{mdframed}[roundcorner=5pt]
+% \begin{Verbatim}[fontsize=\small]
+%   Trace = seq of [Event];
+%   Event = <A> | <V>;
+
+%   state Pacemaker of
+%     aperiod : nat 
+%     vdelay  : nat
+%   init p == p = mk_Pacemaker(15,10)
+%   end
+% \end{Verbatim}
+% \end{mdframed}
+
+% {\tt Trace} is of sequence type of {\tt Event}, where {\tt Event} is of quote type with two values {\tt <A>} and {\tt <V>}. The state is defined as two natural numbers with initial value of {\tt (15,10)}. In Z3, natural numbers is encoded as positive integers (integers with constraint of greater and equal to zero); quote type can be encoded as enumeration type {\tt EnumSort}; sequence type can be encoded as {\tt ArraySort}. The definitions of {\tt Event} and {\tt Trace} are as follows:
+
+
+% Furthermore, since {\tt Trace} is defined as an array in Z3, we added constraints that limit an array as a sequence. Note that in Z3, the constraints are applied on each instance of type {\tt Trace} ({\tt tr} in the following formulas), not on the type itself.
+
+
+% $(len\_tr(tr) = 0 \land tr[1] = 0) \lor (len\_tr(tr) > 0 \land tr[len\_tr(tr)] \neq NDF \land tr[len\_tr(tr)+1] = NDF$
+
+
+% {\tt len\_tr} is defined as an uninterpreted function that takes {\tt tr} as input and returns an integer indicates the length of {\tt tr}. Since the length of a sequence can only be equal or greater than 0, the constraint of {\tt len\_tr} is divided into two cases:
+
+
+% We have defined the context information related to type {\tt Trace}. Now we can procceed to encode and prove the POs of the model. For this VDM-SL model, Overture generated nine POs. Most of the POs are similar so we only demonstrate PO8 and PO3.
+
+% $\bullet$ PO8 is a legal sequence application obligation of operation {\tt Pace} which is explicitly specified. This PO requires that the formulas specified with trace {\tt tr} be legal, i.e., computable to get its result.
+
+
+
+% In PO8 showed above, {\tt tl tr} is the tail of {\tt tr}, and {\tt inds} is the operator of gathering indexes of defined elements of {\tt tr} as the set of natural numbers. To prove PO8, firstly we took negation of PO8 which results a quantifier eliminated formula.
+
+
+% Note that the {\tt oldstate} is not used in the operation so that we remove it in the above formula. 
+% To encode the PO in Z3, the PO can be recognized as the formula $\exists~[tr:Trace,aperi:nat1,vdel:nat1,i:nat] P \land Q \land \neg R$ where $P$, $Q$, and $\neg R$ can be encoded separately.
+
+
+% {\tt tl tr} is the tail of {\tt tr}, and {\tt inds} is the operator of gathering indexes of defined elements of {\tt tr} as the set of natural numbers.
+% In the encoding of $P$, the tail related formula can be encoded as in the range of $[1,(len~tr)-1]$ so that it is not required to define {\tt tl} and {\tt inds} for sequences. Finally, we checked the satisfiability of the encoded Z3 code and got {\tt unsat}, which means that the PO is proved since we have negated it.
 
 
 % {\tt Periodic}: legal sequence application obligation\\
@@ -172,14 +268,23 @@ In the encoding of $P$, the tail related formula can be encoded as in the range 
 % After taken negation of the formula, we got 
 % $\exists tr,e,p,t,i. ~(P \land Q \land Q \land S \land T \land \neg U~)$. In the negated case, the expected result of the negated PO is unsatisfiable, i.e., unsat. The
 
+\subsubsection{Proof Obligation 3}
 
-$\bullet$ PO3 is the postcondition satisfiable obligation of the implicitly specified operation {\tt FaultHeart} that generates a trace of heart pulse signals. PO3 says that the postcondition of {\tt FaultHeart} has to be satisfiable so that the specification of {\tt FaultHeart} is implementable.
+PO3 of the abstracted pacemaker model is the postcondition satisfiable obligation of the implicitly specified operation {\tt FaultHeart} that generates a trace of heart pulse signals. PO3 says that the postcondition of {\tt FaultHeart} has to be satisfiable so that the specification of {\tt FaultHeart} is implementable. Fig.~\ref{fig:po3_case1} shows PO3 along with the specification of state and operation {\tt FaultyHeart}.
 
 % \medskip
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt]
-\begin{Verbatim}[fontsize=\small]
+\begin{Verbatim}[fontsize=\small,numbers=left]
 exists tr:Trace &
   post_FaultyHeart(oldstate, tr, newstate)
+
+state Pacemaker of
+    aperiod : nat 
+    vdelay  : nat
+  init p == p = mk_Pacemaker(15,10)
+  end
 
 FaultyHeart() tr : Trace
 post len tr = 100 and
@@ -187,9 +292,14 @@ post len tr = 100 and
   not Periodic(tr,<V>,aperiod);
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
+\caption{PO3, State {\tt Pacemaker}, and operation {\tt FaultyHeart} of Abstraced Pacemaker}
+\label{fig:po3_case1}
+\end{center}
+\end{figure}
 % \medskip
 
-The above VDM-SL code also shows that definition of {\tt FaultyHeart}. Recall that the state is defined as a pair of natural numbers {\tt aperiod} and {\tt vdelay}. The postcondition of {\tt FaultyHeart} is not specified with {\tt oldstate} which has suffixed tilde, i.e, {\tt aperiod\textasciitilde} and {\tt vdelay\textasciitilde}. Therefore, PO3 is a simplified postcondition satisfiable obligation saying that there exists a {\tt Trace} {\tt tr} which satisfies the postcondition specified with only {\tt newstate}\footnote{How the {\tt newstate} is calculated from {\tt oldstate} is not specified in {\tt FaltyHeart}.}. The postcondition uses the function {\tt Periodic} which is explicitly specified and returns a boolean value. We need to encode {\tt Periodic} as well to prove PO3.
+The state {\tt Pacemaker} is specified as a pair of natural numbers {\tt aperiod} and {\tt vdelay}. The postcondition of {\tt FaultyHeart} is not specified with {\tt oldstate} which has suffixed tilde, i.e, {\tt aperiod\textasciitilde} and {\tt vdelay\textasciitilde}. Therefore, PO3 is a simplified postcondition satisfiable obligation saying that there exists a {\tt Trace} {\tt tr} which satisfies the postcondition specified with only {\tt newstate}\footnote{How the {\tt newstate} is calculated from {\tt oldstate} is not specified in {\tt FaltyHeart}.}. The postcondition of {\tt FaultyHeart} calls the function {\tt Periodic} with three inputs. {\tt Periodic} shown below is an explicitly specified function and returns a boolean value. Therefore, state {\tt Pacemaker}, postcondition of {\tt FaultyHeart} ({\tt post\_FaultyHeart}, and function {\tt Periodic} are the context information of PO3. 
 
 \begin{mdframed}[roundcorner=5pt]
 \begin{Verbatim}[fontsize=\small]
@@ -207,7 +317,7 @@ Periodic(tr,e,p) ==
 \end{Verbatim}
 \end{mdframed}
 
-While the specification of {\tt Periodic} is relatively long. The encoding of {\tt Periodic} is similar to the encoding of PO8. We may observe some similar computations on the trace {\tt tr} such as {\tt in set inds tr} and {\tt len tr}, and we can encode them in the same way as handling PO8. Note that we did not apply negation to the formula since existence quantifier in the prefix of a formula is preferred in Z3. As a result, we got a result of {\tt sat} so that PO3 is proved.
+Though the specification of {\tt Periodic} is relatively long, the encoding of {\tt Periodic} is similar to the encoding of PO8. It is easy to observe similar computations on the trace {\tt tr} such as {\tt in set inds tr} and {\tt len tr}, and we can encode them in the same way as handling PO8. Note that the type {\tt Trace} is again needed in proving PO3 so that the encoding in PO8 above can be used as constraints here. In the case of PO3, we did not apply negation to the formula since existence quantifier in the prefix of a formula is preferred in Z3. As a result, we got a result of {\tt sat} along with a model that satisfies PO3. Therefore, PO3 was proved.
 
 The results of all nine POs of the Abstracted Pacemaker VDM-SL model is showed in Table~\ref{tbl:result1} with information of whether negation is applied, and the time used.
 
@@ -425,5 +535,5 @@ In this case study, we did not check all the 27 POs since the encoding could not
 
 Points of discussion:
 (1) Automation: Is the encoding can be automated? partly or fully? 
-(2) Guidance and patterns: What patterns are repeated used in encoding? Any guide of encoding?
+(2) Patterns: What patterns are repeated used in encoding?
 
