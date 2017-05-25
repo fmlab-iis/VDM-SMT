@@ -1,0 +1,41 @@
+Generated 10 proof obligations:
+
+Proof Obligation 1: (Unproved)
+commands, commands~, S, S~: legal sequence application obligation @ in 'CMDS' at line 11:57
+(forall s:CMDS`S & (forall k in set {1, ... ,((len (s.commands)) - 1)} & (k in set (inds (s.commands)))))
+
+Proof Obligation 2: (Unproved)
+commands, commands~, S, S~: legal sequence application obligation @ in 'CMDS' at line 11:74
+(forall s:CMDS`S & (forall k in set {1, ... ,((len (s.commands)) - 1)} & ((k + 1) in set (inds (s.commands)))))
+
+Proof Obligation 3: (Unproved)
+commands, commands~, S, S~: state invariant satisfiable obligation @ in 'CMDS' at line 9:7
+(exists commands:CMD_series & (forall k in set {1, ... ,((len (s.commands)) - 1)} & ((s.commands)(k) <> (s.commands)((k + 1)))))
+
+Proof Obligation 4: (Unproved)
+push_cmd: non-empty sequence obligation @ in 'CMDS' at line 17:27
+((not (commands = [])) => (commands <> []))
+
+Proof Obligation 5: (Unproved)
+push_cmd: non-empty sequence obligation @ in 'CMDS' at line 18:11
+(((commands = []) or ((hd commands) <> a)) => (commands <> []))
+
+Proof Obligation 6: (Unproved)
+push_cmd: non-empty sequence obligation @ in 'CMDS' at line 18:31
+(((commands = []) or ((hd commands) <> a)) => (((hd commands) = a) => (commands <> [])))
+
+Proof Obligation 7: (Unproved)
+push_cmd: operation postcondition satisfiable obligation @ in 'CMDS' at line 16:3
+(forall a:[CMD], oldstate:CMDS`S & (pre_push_cmd(a, oldstate) => (exists newstate:CMDS`S & post_push_cmd(a, oldstate, newstate))))
+
+Proof Obligation 8: (Unproved)
+times_count: legal sequence application obligation @ in 'CMDS' at line 22:57
+(forall a:CMD_series & (forall i in set (inds a) & (i in set (inds a))))
+
+Proof Obligation 9: (Unproved)
+times_count: legal sequence application obligation @ in 'CMDS' at line 22:105
+(forall a:CMD_series & (forall i in set (inds a) & (i in set (inds a))))
+
+Proof Obligation 10: (Unproved)
+times_count: enumeration map injectivity obligation @ in 'CMDS' at line 22:19
+(forall a:CMD_series & (forall m1, m2 in set {{<R> |-> (len [i | i in set (inds a) & (a(i) = <R>)])}, {<L> |-> (len [i | i in set (inds a) & (a(i) = <L>)])}} & (forall d3 in set (dom m1), d4 in set (dom m2) & ((d3 = d4) => (m1(d3) = m2(d4))))))

@@ -1,0 +1,24 @@
+module CMDS
+definitions
+
+types
+CMD = <R> | <L>;
+CMD_series = seq of [CMD];
+CMD_times = map CMD to nat;
+
+state S of
+  commands : CMD_series
+  inv s == forall k in set {1,...,len s.commands - 1} & s.commands(k) <> s.commands(k+1)
+  init p == p = mk_S([])
+end
+
+operations
+  push_cmd(a:[CMD])
+  pre commands = [] or hd commands <> a
+  post hd commands = a and tl commands = commands~;
+
+functions
+times_count : CMD_series -> CMD_times
+times_count(a) == { <R> |-> len [ i | i in set inds a & a(i)=<R> ], <L> |-> len [ i | i in set inds a & a(i)=<L> ] };
+
+end CMDS
