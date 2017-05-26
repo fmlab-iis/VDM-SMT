@@ -1,6 +1,7 @@
 This section gives studies that apply our encoding to selected VDM-SL models and discusses the results. All the selected VDM-SL models can be found in Overture repository\footnote{http://overturetool.org/download/examples/VDMSL/}.
 
 \subsection{Abstract Pacemaker}
+\label{section:case1}
 
 The first case is a small VDM-SL model specifies an abstract pacemaker. The model is not a full specification and focuses on part of definitions and operations related to heartbeat signals detected and recorded in a pacemaker. For this model of 58 lines, Overture generated nine POs. Here we report two the encoding and solving of obligations PO8 and PO3 for this case.
 
@@ -343,6 +344,7 @@ PO\#	&	negated	&	result	&	time (sec.) \\ \hline
 
 
 \subsection{Telephone Exchange}
+\label{section:case2}
 
 This model specifies an abstracted telephone exchange system. In this model, the operations specify the events which can be initiated either by the system or by a subscriber (user) with implicit style. The system state monitors the calling status of users and the connecting status among users. Overture tool generated twenty-seven POs, and we selected PO1 and PO14 for report the case study.
 
@@ -580,10 +582,7 @@ forall i in set dom calls & calls(i) != i
 \end{Verbatim}
 \end{mdframed}
 
-In this case study, we did not check all the twenty-seven POs since the encoding demonstrated in this paper could not cover all POs. The main issue is that the maps are encoded as uninterpreted functions so that {\tt forall} quantifier cannot be applied. This results that we could not check the postcondition satisfiable obligations of this model\footnote{Besides postcondition satisfiable obligations, there are two POs with type check function {\tt is\_(name, type)}, for which Z3 encoding is not available and then skipped.}. After all, we successfully checked 16 out of all 27 POs for the telephone exchange VDM-SL model.
-
-
-\subsection{Discussion}
+In this case study, we did not check all the twenty-seven POs since the encoding demonstrated in this paper could not cover all POs. The main issue is that the maps are encoded as uninterpreted functions so that {\tt forall} quantifier cannot be applied. This results that we could not check the postcondition satisfiable obligations of this model\footnote{Besides postcondition satisfiable obligations, there are two POs with type check function {\tt is\_(name, type)}, for which Z3 encoding is not available and then skipped.}. After all, we successfully checked sixteen out of all twenty-seven POs for the telephone exchange VDM-SL model.
 
 % Overture generated 27 POs for this model. These POs can be divided into several groups as showed below. In this case study we encoded and checked the first three groups using the above encoding of types. The reason of not handling the postcondition obligations is that the maps defined using uninterpreted functions cannot be used together with quantifiers. Also, map inverse obligations have {\tt is\_(name, type)}, the function of type check provided by VDM, in their formulas. There is no appropriate encoding for such type check functions in Z3. 
 
@@ -600,7 +599,22 @@ In this case study, we did not check all the twenty-seven POs since the encoding
 % Map inverse obligations: 13, 24.
 % \end{enumerate}
 
-Points of discussion:
-(1) Automation: Is the encoding can be automated? partly or fully? 
-(2) Patterns: What patterns are repeated used in encoding?
+\subsection{Discussion}
+
+As an overall result of our case studies, the objective of our approach that to discharge POs of a VDM-SL model as many as possible is achieved. In the first case study (Abstracted Pacemaker), we discharged all nine POs; in the second case study, we discharged sixteen POs our of total twenty-seven POs (about 60\%). To increase the percentage of discharging POs, we may further used different encoding, for example, encoding maps using arrays in Z3, to solve remaining POs.
+
+% Usability and Applicability of the Encode Style
+The two case studies demonstrated the application of the encode strategy described in Section~\ref{section:encode-strategy}. From our experiences, the cost and complexity of encoding varies from specifications in a VDM model. Usually, the complexity of encoded formulas usually depends on the complexity of types used in a VDM model. For example, natural number based types such as {\tt seq of nat} or {\tt map from nat to nat} have less complexity, and it shall be easier to encode and solve this kind of types with SMT solvers. On the contrary, for types such as a map of sequences or a set of maps, the encoding may be difficult and the complexity of the encoded formulas may grow a lot.
+
+The encoding demonstrated in the two case studies can be referred as encoding patterns. For example, the encoding of union type and quote type with user-defined types or enumeration type, and the encoding of maps with uninterpreted functions, are useful for later encoding of POs of other VDM-SL models. Also, the patterns of encoding like the constraints for defining a sequence from arrays, and set inclusion of indexes of a sequence, or set inclusion of domain/range of a map, are also reusable. In our case studies, these encoding patterns are actually applied multiple times. 
+
+% Automation of the encoding style and strategy
+Though the encoding patterns are useful, applying the encoding patterns still depends on specification of VDM models because that the encoding patterns are not systemic or syntax-based. Considering automated encoding of POs and related context information, the types are easier to encode with automation, but encoding formulas of POs remains manual and rely on encode patterns.
+
+% Scalability and Efficiency}
+From our case studies, it can be recognized that the efficiency of SMT solvers is one the advantages of our approach. Also, the counterexample (model) generation of SMT solvers provides hints for revision and correction of VDM models. As reported in Section~\ref{section:case2}, encoding and solving PO14 of the telephone exchange VDM-SL model found an inconsistency and the counterexample provides a guidance of adding a constraint to fix the inconsistency\footnote{A previous work~\cite{kenneth:ifm2013} that translates VDM-SL to Alloy~\cite{kenneth:ifm2013} checked the VDM-SL model and found a different problem. The model (from the Overture repository) we used for case study is the fixed one which means that the inconsistency we found was not found in~\cite{kenneth:ifm2013}.}. Finally, the scalability of our approach is not serious because we only encode the formula of a PO and its context information. The size of VDM-SL code to be encoded does not escalate with the size of a VDM-SL model.
+
+% Points of discussion:
+% (1) Automation: Is the encoding can be automated? partly or fully? 
+% (2) Patterns: What patterns are repeated used in encoding?
 
