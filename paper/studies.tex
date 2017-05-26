@@ -344,10 +344,35 @@ PO\#	&	negated	&	result	&	time (sec.) \\ \hline
 
 \subsection{Telephone Exchange}
 
-This model specifies an abstracted telephone exchange system. In this model, the operations specify the events which can be initiated either by the system or by a subscriber (user) with implicit style. The system state monitors the calling status of users and the connecting status among users. Type in the model are based on quote types used to indicate the discrete states of users, then maps are specified to relate the calling and connecting status to users as the system state. An invariant is specified for the state {\tt Exchange} to declare the constraints among users and their status in the system.
+This model specifies an abstracted telephone exchange system. In this model, the operations specify the events which can be initiated either by the system or by a subscriber (user) with implicit style. The system state monitors the calling status of users and the connecting status among users. Overture tool generated twenty-seven POs, and we selected PO1 and PO14 for report the case study.
 
+\subsubsection{Proof Obligation 1}
+
+PO1 shown in Fig.~\ref{fig:po1_case2} is a legal map application obligation that checks whether maps in the system state are applicable. In PO1, types of the state {\tt Exchange} which is a record type of {\tt status} and {\tt calls} is used. Therefore, the context information of PO1 is the state including its invariant. Fig.~\ref{fig:types_case2} shows the definitions of state {\tt Exchange} with corresponding quote types. The state {\tt Exchange} contains two maps: {\tt status} indicates the discrete calling status of users, and is a map from {\tt Subscriber} to {\tt Status}; {\tt calls} models the connection relation of users, i.e., which users are connected, and is a map from {\tt Subscriber} to {\tt Subscriber}. Note that {\tt calls} is specified as {\tt inmap} type which means an one-to-one map. This means if a user is calling another user, both of the users can not have other connections to third party users. Also, {\tt Exchange} has state invariant that is specified for the constraints about connections of users and their calling status. At this point, the context information of PO1 is determined and we may proceed to encoding.
+
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt]
 \begin{Verbatim}[fontsize=\small]
+forall
+  mk_Exchange(status, calls):EXCH`Exchange &
+    (forall i in set (dom calls) &
+      (i in set (dom status))
+    )
+)
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{PO1 of Telephone Exchange}
+\label{fig:po1_case2}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small,numbers=left]
 Subscriber = token;
 Initiator =  <AI> | <WI> | <SI>;
 Recipient = <WR> | <SR>;
@@ -367,9 +392,16 @@ init s == s = mk_Exchange({|->},{|->})
 end
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
+\caption{Types and state of Telephone Exchange}
+\label{fig:types_case2}
+\end{center}
+\end{figure}
 
-The strategy of encoding the above types is (1) applying user-defined types in Z3 to encode the quote types; (2) applying uninterpreted functions to encode map type. Here we only demonstrate a few selected types since the others are similar. 
+The strategy of encoding the types shown in Fit.~\ref{fig:types_case2} is (1) applying user-defined types in Z3 to encode the quote types; (2) applying uninterpreted functions to encode map type. In Fig.~\ref{fig:encode_types_case2}, we demonstrate the encoding of selected types. 
 
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt,shadow=true]
 \begin{Verbatim}[fontsize=\small]
 Recipient = Datatype('Recipient')
@@ -398,90 +430,54 @@ calls = Function('calls',
                  Subscriber,Subscriber_lift)
 \end{Verbatim}
 \end{mdframed}
+\vspace{-10pt}
+\caption{Encoding of quote and map types in Fig.\ref{fig:types_case2} (partial)}
+\label{fig:encode_types_case2}
+\end{center}
+\end{figure}
 
-From above code, the type {\tt Recipient} is defined as an user-defined type with values {\tt WR} and {\tt SR}. Type {\tt Status} is further defined as a user-defined type including {\tt Recipient} and {\tt Initiator}. Note that since VDM uses partial functions, we also defined a lifted type of {\tt Status}. Though {\tt Subscriber} is of token type which does not have specific values when declared, we treated token types as quote types with predefined values such as {\tt S1}, {\tt S2}, and so on. Finally the two maps {\tt status} and {\tt calls} are defined as uninterpreted functions. Overture generated 27 POs for this model. Here we present the encoding and proving of PO1 and PO14.
+In Fig.~\ref{fig:encode_types_case2}, the type {\tt Recipient} is defined as an user-defined type with values {\tt WR} and {\tt SR}. Type {\tt Status} is further defined as a user-defined type including {\tt Recipient} and {\tt Initiator}. Though {\tt Status} is actually an union type combines {\tt Initiator} and {\tt Recipient}, and can be considered an enumeration, we encoded {\tt Status} using user-defined type style in Z3py. The reason is that we prefer the subtypes {\tt Initiator} and {\tt Status} can be distinguishable in Z3.
 
-$\bullet$ PO1 is a legal map application obligation that checks whether maps in the system state are applicable. 
+Note that since VDM uses partial functions, for the type to be declared as the range of map, i.e., {\tt Subscriber} and {\tt Status}, we defined their lifted type in Z3py to take into consideration the case that the value to a key of a map is undefined. Also, though {\tt Subscriber} is of token type which does not have specific values when declared, we treated token types as quote types with predefined domain of values such as {\tt S1}, {\tt S2}, and so on. The two maps {\tt status} and {\tt calls} in the state {\tt Exchange} are encoded as uninterpreted functions and the state invariant is encoded by the encoded (and lifted) types mentioned above. 
 
-\begin{mdframed}[roundcorner=5pt]
-\begin{Verbatim}[fontsize=\small]
-forall
-  mk_Exchange(status, calls):EXCH`Exchange &
-    (forall i in set (dom calls) &
-      (i in set (dom status))
-    )
-)
-\end{Verbatim}
-\end{mdframed}
+Fig.~\ref{fig:encode_state_inv_case2} shows the encoding of the state invariant. Note that the encoding of {\tt i in set (dom calls)} (line 11 of Fig.~\ref{fig:types_case2}) is encoded as {\tt calls(i)!=Subscriber\_lift.NDF} (line 3 of Fig.~\ref{fig:encode_state_inv_case2}) because the set inclusion only means that the domain (key) of {\tt calls} has defined value in the range of {\tt calls}. Therefore, we do not have to encode the set of domain neither the set inclusion operator. The condition that the range value of a map is defined or not is essential here. For example, to encode {\tt status(calls(i)) = <WR>} (line 13 of Fig.~\ref{fig:types_case2}), we have ensure the condition that {\tt calls(i)} has to be defined so that additional constraint {\tt calls(i)!=Subscriber\_lift.NDF} (line 9 of Fig.~\ref{fig:encode_state_inv_case2}).
 
-Since PO1 explicitly uses the system state, we need to consider the invariant of the system state as the context information of PO1. 
-Instead of demonstrate the full encoding of the invariant, we only demonstrate the key encoding for {\tt i in set (dom calls)} and {\tt i in set (dom status)}. Though there is set inclusion used, instead of defining a set, we can encode the set inclusion as whether {\tt calls(i)} is defined or not.
+% Instead of demonstrate the full encoding of the invariant, we only demonstrate the key encoding on {\tt i in set (dom calls)} and {\tt i in set (dom status)}. Though there is set inclusion used, instead of defining a set, we can encode the set inclusion as whether {\tt calls(i)} is defined or not.
 
+\begin{figure}[t]
+\begin{center}
 \begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
-  calls(i) != Subscriber_lift.NDF
-  status(i)!= Status_lift.NDF
-\end{Verbatim}
-\end{mdframed}
-
-For PO1, we applied negation to the formula so that the {\tt forall} quantifier for maps {\tt calls} and {\tt status} is removed. The result was {\tt unsat} which means PO1 was proved.
-
-\begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
-Not(
-  ForAll(i,
-    Implies(
+\begin{Verbatim}[fontsize=\small,numbers=left]
+ForAll(i,
+  Implies(
+  calls(i)!=Subscriber_lift.NDF,
+  Or(
+    And(
+      status(i)==
+        Status_lift.STATUS(
+        Status.INITIATOR(Initiator.WI)),
+	  calls(i)!=Subscriber_lift.NDF,
+      status(Subscriber_lift.
+        get_subscriber(calls(i)))==
+        Status_lift.STATUS(
+          Status.RECIPIENT(Recipient.WR))),
+    And(
+      status(i)==
+        Status_lift.STATUS(
+        Status.INITIATOR(Initiator.SI)),
       calls(i)!=Subscriber_lift.NDF,
-      status(i)!=Status_lift.NDF
-    )
-  )
-)
+      status(Subscriber_lift.
+        get_subscriber(calls(i)))==
+        Status_lift.STATUS(
+          Status.RECIPIENT(Recipient.SR)))
+)))
 \end{Verbatim}
 \end{mdframed}
-
-$\bullet$ PO14 is an enumeration map injectivity obligatoin of the operation {\tt Answer} of the system. PO14 has free variables, {\tt r} and {\tt status}, in its formula. These free variables are treated as the quantifier {\tt forall} is prefixed. There are also intermediate variables in the formula such as {\tt m1}, {\tt m2}, {\tt d3}, and {\tt d4}. Note that the inverse function of a map, and the range restriction function {\tt :>} are {\tt applied} on calls and {\tt status}. Also note that {\tt calls} is a one-to-one map {\tt inmap}.
-
-\begin{mdframed}[roundcorner=5pt]
-\begin{Verbatim}[fontsize=\small]
-(r in set (dom (status :> {<WR>}))) =>
-  (forall m1, m2 in 
-    set {{r |-> <SR>}, 
-         {(inverse calls)(r) |-> <SI>}} &
-    (forall d3 in set (dom m1),
-            d4 in set (dom m2) &
-      ((d3 = d4) => (m1(d3) = m2(d4)))
-))
-\end{Verbatim}
-\end{mdframed}
-
-We negated PO14 so that the {\tt forall} quantifiers are removed. To encode the negated formula of PO14, similar technique for  encoding {\tt set (dom status)} for PO1 can be applied. For the range restriction function, since the range is a singleton set with element value of {\tt <WR>}, we can skip encoding set notations while limiting the map value {\tt status(r)} to {\tt <WR>}. Thus, {\tt r in set (dom (status :> \{<WR>\}))} is encoded as follows.
-
-\begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
-status(r)==
-  Status_lift.STATUS(
-    Status.RECIPIENT(Recipient.WR) )
-\end{Verbatim}
-\end{mdframed}
-
-For the map inverse function, we chose not to define a new map as the inverse of {\tt calls}, but encoded {\tt m1 = \{(inverse calls)(r) |-> <SI>\}} as a case of {\tt m1 in set \{\{r |-> <SR>\}, \{(inverse calls)(r) |-> <SI>\}\}}. The case was encoded as the collection of several conditions. 
-
-\begin{mdframed}[roundcorner=5pt,shadow=true]
-\begin{Verbatim}[fontsize=\small]
-# inverse map is not empty
-calls(i)!=Subscriber_lift.NDF 
-# inverse_calls(r) == i
-Subscriber_lift.get_subscriber(calls(i))==r
-
-m1(i)==Status_lift.STATUS(
-         Status.INITIATOR(Initiator.SI)),
-
-ForAll(k, 
-  Implies(k!=i, m1(k)==Status_lift.NDF) )
-\end{Verbatim}
-\end{mdframed}
-
-In above code, the first two conditions promise that (1) the part of map, where key {\tt i} is used and inverse is applied, has to be defined; (2) the domain of the inversed map, i.e., the range of the original map, is {\tt r}. Then {\tt m1(i)} where key {\tt i} is referred should be {\tt <SI>}. Finally the last condition guarantees that {\tt m1} should be undefined for all indexes except {\tt i}.
+\vspace{-10pt}
+\caption{Encoding of state invariant of Telephone Exchange}
+\label{fig:encode_state_inv_case2}
+\end{center}
+\end{figure}
 
 Recall that {\tt calls} is defined as {\tt inmap}, a one-to-one map. Thus, we had to add  the conditions about {\tt inmap} as context information: for any two different users, either both users calls no one (undefined) or they are calling different users.
 
@@ -504,9 +500,79 @@ ForAll([k,l],
 )
 \end{Verbatim}
 \end{mdframed}
-\medskip
 
-The result of checking PO14 (negated) ware expected to be {\tt unsat}, but we got {\tt sat}. Z3 returned a model that satisfies the negated formula and constraints so that we could examine where is the problem. We found that {\tt calls} in the returned model is a map where users calls themselves. This does not violate the type of {\tt inmap}, but an user cannot call him/her-self in a telephone exchange system. Therefore, the checking of PO14 suggested that the VDM-SL model should add a constraint on {\tt calls}. As an example of correction, we may add the constraint below as the type invariant of {\tt calls} or the additional state invariant\footnote{We have added the constraint and checked again, and the PO was proved successfully.}.
+The encoding of PO1 is done by encoding the negated PO1. As the following code shows, outside forall of {\tt Exchange} of PO1 is eliminated by the negation. The result was {\tt unsat} which means PO1 was proved.
+
+% \begin{mdframed}[roundcorner=5pt,shadow=true]
+% \begin{Verbatim}[fontsize=\small]
+%   calls(i) != Subscriber_lift.NDF
+%   status(i)!= Status_lift.NDF
+% \end{Verbatim}
+% \end{mdframed}
+
+% For PO1, we applied negation to the formula so that the {\tt forall} quantifier for maps {\tt calls} and {\tt status} is removed. The result was {\tt unsat} which means PO1 was proved.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+Not(
+  ForAll(i,
+    Implies(
+      calls(i)!=Subscriber_lift.NDF,
+      status(i)!=Status_lift.NDF
+    )
+  )
+)
+\end{Verbatim}
+\end{mdframed}
+
+
+\subsubsection{Proof Obligation 14}
+
+PO14 is an enumeration map injectivity obligation of the operation {\tt Answer} of the system. PO14 has free variables, {\tt r} and {\tt status}, in its formula. These free variables are treated as the bounded by forall quantifier. There are also intermediate variables in the formula such as {\tt m1}, {\tt m2}, {\tt d3}, and {\tt d4}. Note that the inverse function of a map, and the range restriction function {\tt :>} are on {\tt calls} and {\tt status} separately. (Recall that {\tt calls} is a one-to-one map {\tt inmap}.) The context information of PO14 includes the two maps {\tt status} and {\tt calls} but not the state {\tt Exchange}. Therefore, only the two maps have to be encoded. The state invariant is excluded in the encoding. Note that the constraints for {\tt calls} of type {\tt inmap} is included in the context information of PO14, and the encoding in PO1 can be reused here.
+
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+(r in set (dom (status :> {<WR>}))) =>
+  (forall m1, m2 in 
+    set {{r |-> <SR>}, 
+         {(inverse calls)(r) |-> <SI>}} &
+    (forall d3 in set (dom m1),
+            d4 in set (dom m2) &
+      ((d3 = d4) => (m1(d3) = m2(d4)))
+))
+\end{Verbatim}
+\end{mdframed}
+
+When encoding the formula of PO14, firstly, we negated PO14 and eliminated the forall quantifiers. To encode the negated formula of PO14, similar technique for  encoding {\tt set (dom status)} in PO1 can be applied. For the range restriction function, since the range is a singleton set with element value of {\tt <WR>}, we do not have to encode the set notations and only limit the map's range {\tt status(r)} to {\tt <WR>}. Thus, {\tt r in set (dom (status :> \{<WR>\}))} is encoded as follows.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+status(r)==
+  Status_lift.STATUS(
+    Status.RECIPIENT(Recipient.WR) )
+\end{Verbatim}
+\end{mdframed}
+
+For the map inverse function, we chose not to define a new map as the inverse of {\tt calls}, but encoded {\tt m1 = \{(inverse calls)(r) |-> <SI>\}} as a case of {\tt m1 in set \{\{r |-> <SR>\}, \{(inverse calls)(r) |-> <SI>\}\}}. The case was encoded as the collection of several conditions. 
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+# ensure the inverse map is not empty
+calls(i)!=Subscriber_lift.NDF 
+# inverse_calls(r) == i
+Subscriber_lift.get_subscriber(calls(i))==r
+
+m1(i)==Status_lift.STATUS(
+         Status.INITIATOR(Initiator.SI)),
+
+ForAll(k, 
+  Implies(k!=i, m1(k)==Status_lift.NDF) )
+\end{Verbatim}
+\end{mdframed}
+
+In above code, the first two conditions (lines 1-4) promise that (1) the part of map, where key {\tt i} is used and inverse is applied, has to be defined; (2) the domain key of the inversed map, i.e., the range value of the original map, is {\tt r}. Then {\tt m1(i)} where key {\tt i} is referred should be {\tt <SI>} (lines 6-7). (3) the last condition guarantees that {\tt m1} should be undefined for all indexes except {\tt i} (lines 9-10) because {\tt m1} is a single map that has only one key and one value.
+
+The result of checking PO14 (negated) ware expected to be {\tt unsat}, but we got {\tt sat} instead. Z3 returned a model that satisfies the negated formula of PO14. After examined the counterexample returned by Z3, we found that {\tt calls} in the returned model is a map where users calls themselves. This does not violate the type constraint of {\tt inmap} encoded above, but an user is not allowed to call him/her-self in a telephone exchange system. Therefore, the checking of PO14 suggested that the VDM-SL model should add a constraint on {\tt calls}. As an example of correction, we may add the constraint below as the type invariant of {\tt calls} or add it to the state invariant\footnote{We have added the constraint and checked again, and the PO was proved successfully.}.
 
 \begin{mdframed}[roundcorner=5pt]
 \begin{Verbatim}[fontsize=\small]
@@ -514,7 +580,8 @@ forall i in set dom calls & calls(i) != i
 \end{Verbatim}
 \end{mdframed}
 
-In this case study, we did not check all the 27 POs since the encoding could not cover all POs. The main issue is that the maps are encoded as uninterpreted functions so that {\tt forall} quantifier cannot be applied. This results that we could not check the postcondition satisfiable obligations of this model\footnote{Besides postcondition satisfiable obligations, there are two POs with type check function {\tt is\_(name, type)}, for which Z3 encoding is not available and then skipped.}. Finally, we checked 16 out of all 27 POs.
+In this case study, we did not check all the twenty-seven POs since the encoding demonstrated in this paper could not cover all POs. The main issue is that the maps are encoded as uninterpreted functions so that {\tt forall} quantifier cannot be applied. This results that we could not check the postcondition satisfiable obligations of this model\footnote{Besides postcondition satisfiable obligations, there are two POs with type check function {\tt is\_(name, type)}, for which Z3 encoding is not available and then skipped.}. After all, we successfully checked 16 out of all 27 POs for the telephone exchange VDM-SL model.
+
 
 \subsection{Discussion}
 
