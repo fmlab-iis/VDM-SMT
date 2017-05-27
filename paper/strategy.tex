@@ -13,14 +13,14 @@ Currently, the encoding is manually performed based on the obligation to be disc
 \item
 Determine the context information of the PO: The context information is the definitions specified in the VDM model that are involved in the obligation. The context information may include types, functions, and operations. Note that if a type is involved, its type invariant should be included, too.
 \item
-Encode context information: this step encodes the context information determined by the first step, and can be divided into several minor steps.
+Encode context information: this step encodes the context information determined by the first step and can be divided into several minor steps.
 \begin{enumerate}
 \item
 For a VDM type in the context information, both the type itself and its invariant have to be encoded.
 \item
 For pre- and post-conditions of a function/operation specified in the VDM model, the encoding is needed if {\tt pre\_<name>} or {\tt post\_<name>} are used in the PO. For example, PO7 of the {\tt CMDS} module described in Section~\ref{section:proof-obligations} mentioned both precondition and postcondition, so both conditions shall be encoded.
 \item
-If a PO only considers a part of the specification of a type, function, or an operations, it is only needed to encode the expressions that are directly used in the PO. In other words, if a type, a function, or an operation is not directly mentioned, for example, a variable mentioned with {\tt name:type} style, or a function mentioned with {\tt fun\_name(arguments)} style, there is no need to encode the full specification of the type, the function, or the operation.
+If a PO only considers a part of the specification of a type, a function, or an operations, it is only needed to encode the expressions that are directly used in the PO. In other words, if a type, a function, or an operation is not directly mentioned, for example, a variable mentioned with {\tt name:type} style, or a function mentioned with {\tt fun\_name(arguments)} style, there is no need to encode the full specification of the type, the function, or the operation.
 \end{enumerate}
 \item
 Obligation negation and quantifier elimination
@@ -28,7 +28,7 @@ Obligation negation and quantifier elimination
 \item
 Obligation negation: In model checking with SMT solvers, the assertion to be checked is usually negated, and the result of unsatmeans the proof of the assertion succeeds. For the result of sat which means the assertion can be violated, SMT solvers return a model as the counterexample that shows an example of how the assertion is violated. In this work, we also take negation on the PO to be discharged. However, the elimination of forall quantifier should be considered together when applying the negation to the PO.
 \item
-Elimination of forall quantifiers: POs of VDM usually have forall quantifiers. To solve the formulas with forall quantifiers in Z3, though Z3 accepts formulas with forall quantifiers, there are limitations applying forall quantifiers in Z3 so that by default we have to eliminate forall quantifiers before encoding. In this work, forall quantifier usually causes difficulties in encoding and solving when complex types are involved. Obligation negation described above may achieve the elimination of troublesome foall quantifiers. On the other hand, obligation negation should be applied carefully not to introduce troublesome forall quantifiers from exists quantifiers.
+Elimination of forall quantifiers: POs of VDM usually have forall quantifiers. To solve the formulas with forall quantifiers in Z3, though Z3 accepts formulas with forall quantifiers, there are limitations applying forall quantifiers in Z3 so that by default we have to eliminate forall quantifiers before encoding. In this work, forall quantifier usually causes difficulties in encoding and solving when complex types are involved. Obligation negation described above may achieve the elimination of troublesome forall quantifiers. On the other hand, obligation negation should be applied carefully not to introduce troublesome forall quantifiers from exists quantifiers.
 \end{enumerate}
 \item
 Encode the predicate of obligation and check for satisfiability.
@@ -49,7 +49,7 @@ For more details, the Z3py encoding firstly needs to include the Z3 module and d
 \end{Verbatim}
 \end{mdframed}
 
-The above Python code imports the z3 module and create a solver object, then declare an integer {\tt i} with a constraint that {\tt i} is greater and equal to zero. In this case, {\tt i} is the encoding an instance of type {\tt nat} in VDM. Note that we cannot add constraints on types but on instance of types in Z3. This means that if there are several variables of the same VDM type that Z3 does not have, instances of the same number of variables have to be declared in Z3 with constraints for every instance added to the solver object. The steps and strategies of encoding discussed above will be demonstrated with details in Section~\ref{section:case-studies} through the report of case studies.
+The above Python code imports the z3 module and create a solver object, then declare an integer {\tt i} with a constraint that {\tt i} is greater and equal to zero. In this case, {\tt i} is the encoding an instance of type {\tt nat} in VDM. Note that we cannot add constraints on types but instances of types in Z3. This means that if there are several variables of the same VDM type that Z3 does not have, instances of the same number of variables have to be declared in Z3 with constraints for every instance added to the solver object. The steps and strategies of encoding discussed above will be demonstrated with details in Section~\ref{section:case-studies} through the report of case studies.
 
 
 % Z3py encoding: taking negation and forall quantifier elimination
