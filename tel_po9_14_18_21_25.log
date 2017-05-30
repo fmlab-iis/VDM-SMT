@@ -1,0 +1,171 @@
+
+Telephone: proof obligation 9
+[And(And(status(i) == STATUS(INITIATOR(AI)),
+         status(r) == STATUS(fr)),
+     And(And(Xor(And(m1(i) == STATUS(INITIATOR(WI)),
+                     ForAll(k,
+                            Implies(k != i, m1(k) == NDF))),
+                 And(m1(r) == STATUS(RECIPIENT(WR)),
+                     ForAll(k,
+                            Implies(k != r, m1(k) == NDF)))),
+             Xor(And(m2(i) == STATUS(INITIATOR(WI)),
+                     ForAll(k,
+                            Implies(k != i, m2(k) == NDF))),
+                 And(m2(r) == STATUS(RECIPIENT(WR)),
+                     ForAll(k,
+                            Implies(k != i, m2(k) == NDF))))),
+         And(And(m1(d3) != NDF, m2(d4) != NDF),
+             And(d3 == d4, m1(d3) != m2(d4)))))]
+unsat
+--- 0.047 seconds ---
+
+
+Telephone: proof obligation 14
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(status(r) == STATUS(RECIPIENT(WR)),
+     And(And(Xor(And(m1(r) == STATUS(RECIPIENT(SR)),
+                     ForAll(k,
+                            Implies(k != r, m1(k) == NDF))),
+                 And(calls(i) != NDF,
+                     get_subscriber(calls(i)) == r,
+                     m1(i) == STATUS(INITIATOR(SI)),
+                     ForAll(k,
+                            Implies(k != i, m1(k) == NDF)))),
+             Xor(And(m2(r) == STATUS(RECIPIENT(SR)),
+                     ForAll(k,
+                            Implies(k != r, m2(k) == NDF))),
+                 And(calls(j) != NDF,
+                     get_subscriber(calls(j)) == r,
+                     m2(j) == STATUS(INITIATOR(SI)),
+                     ForAll(k,
+                            Implies(k != j, m2(k) == NDF))))),
+         And(And(m1(d3) != NDF, m2(d4) != NDF),
+             And(d3 == d4, m1(d3) != m2(d4)))))]
+sat
+model: [i = s1,
+ d3 = s1,
+ d4 = s1,
+ k!3 = s2,
+ k!6 = s1,
+ k!4 = s1,
+ j = s1,
+ k!5 = s2,
+ r = s1,
+ calls = [else -> calls!31(k!30(Var(0)))],
+ k!30 = [s2 -> s2, s4 -> s4, s3 -> s3, s5 -> s5, else -> s1],
+ m1 = [s1 -> STATUS(RECIPIENT(SR)), else -> NDF],
+ calls!31 = [s1 -> SUBSCRIBER(s1),
+             s3 -> SUBSCRIBER(s2),
+             s4 -> SUBSCRIBER(s3),
+             s5 -> SUBSCRIBER(s5),
+             else -> SUBSCRIBER(s4)],
+ status = [else -> STATUS(RECIPIENT(WR))],
+ m2 = [s1 -> STATUS(INITIATOR(SI)), else -> NDF]]
+--- 0.063 seconds ---
+
+
+Telephone: proof obligation 18
+get_subscriber(NDF)
+[ForAll(k,
+        Implies(calls(k) != NDF,
+                get_subscriber(calls(k)) != k)),
+ And(status(i) == STATUS(INITIATOR(WI)),
+     And(And(Xor(And(m1(i) == STATUS(fr),
+                     ForAll(k,
+                            Implies(k != i, m1(k) == NDF))),
+                 And(is_SUBSCRIBER(calls(i)),
+                     m1(get_subscriber(calls(i))) ==
+                     STATUS(fr),
+                     ForAll(k,
+                            Implies(k != r, m1(k) == NDF)))),
+             Xor(And(m2(i) == STATUS(fr),
+                     ForAll(k,
+                            Implies(k != i, m2(k) == NDF))),
+                 And(is_SUBSCRIBER(calls(i)),
+                     m2(get_subscriber(calls(i))) ==
+                     STATUS(fr),
+                     ForAll(k,
+                            Implies(k != i, m2(k) == NDF))))),
+         And(And(m1(d3) != NDF, m2(d4) != NDF),
+             And(d3 == d4, m1(d3) != m2(d4)))))]
+unsat
+--- 0.047 seconds ---
+
+
+Telephone: proof obligation 21
+get_subscriber(NDF)
+[ForAll(k,
+        Implies(calls(k) != NDF,
+                get_subscriber(calls(k)) != k)),
+ And(status(i) == STATUS(INITIATOR(SI)),
+     And(And(Xor(And(m1(i) == STATUS(fr),
+                     ForAll(k,
+                            Implies(k != i, m1(k) == NDF))),
+                 And(is_SUBSCRIBER(calls(i)),
+                     m1(get_subscriber(calls(i))) ==
+                     STATUS(un),
+                     ForAll(k,
+                            Implies(k != r, m1(k) == NDF)))),
+             Xor(And(m2(i) == STATUS(fr),
+                     ForAll(k,
+                            Implies(k != i, m2(k) == NDF))),
+                 And(is_SUBSCRIBER(calls(i)),
+                     m2(get_subscriber(calls(i))) ==
+                     STATUS(un),
+                     ForAll(k,
+                            Implies(k != i, m2(k) == NDF))))),
+         And(And(m1(d3) != NDF, m2(d4) != NDF),
+             And(d3 == d4, m1(d3) != m2(d4)))))]
+unsat
+--- 0.046 seconds ---
+
+
+Telephone: proof obligation 25
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(status(r) == STATUS(RECIPIENT(SR)),
+     And(And(Xor(And(m1(r) == STATUS(RECIPIENT(WR)),
+                     ForAll(k,
+                            Implies(k != r, m1(k) == NDF))),
+                 And(is_SUBSCRIBER(calls(i)),
+                     get_subscriber(calls(i)) == r,
+                     m1(i) == STATUS(INITIATOR(WI)),
+                     ForAll(k,
+                            Implies(k != i, m1(k) == NDF)))),
+             Xor(And(m2(r) == STATUS(RECIPIENT(WR)),
+                     ForAll(k,
+                            Implies(k != r, m2(k) == NDF))),
+                 And(is_SUBSCRIBER(calls(j)),
+                     get_subscriber(calls(j)) == r,
+                     m2(j) == STATUS(INITIATOR(WI)),
+                     ForAll(k,
+                            Implies(k != j, m2(k) == NDF))))),
+         And(And(m1(d3) != NDF, m2(d4) != NDF),
+             And(d3 == d4, m1(d3) != m2(d4)))))]
+sat
+model: [i = s1,
+ k!44 = s1,
+ r = s1,
+ d3 = s1,
+ d4 = s1,
+ k!43 = s1,
+ j = s4,
+ k!45 = s2,
+ k!42 = s2,
+ calls = [else -> calls!65(k!64(Var(0)))],
+ calls!65 = [s1 -> SUBSCRIBER(s1),
+             s3 -> SUBSCRIBER(s2),
+             else -> NDF],
+ m1 = [s1 -> STATUS(INITIATOR(WI)), else -> NDF],
+ k!64 = [s2 -> s2, s4 -> s4, s3 -> s3, s5 -> s5, else -> s1],
+ status = [else -> STATUS(RECIPIENT(SR))],
+ m2 = [s1 -> STATUS(RECIPIENT(WR)), else -> NDF]]
+--- 0.063 seconds ---
+

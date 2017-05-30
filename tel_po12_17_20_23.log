@@ -1,0 +1,64 @@
+
+Telephone: proof obligation 12
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(status(r) == STATUS(RECIPIENT(WR)),
+     Not(And(is_SUBSCRIBER(calls(i)),
+             get_subscriber(calls(i)) == r)))]
+sat
+model: [i = s1,
+ r = s2,
+ status = [else -> STATUS(RECIPIENT(WR))],
+ calls = [else -> NDF]]
+--- 0.015 seconds ---
+
+
+Telephone: proof obligation 17
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(status(i) == STATUS(INITIATOR(WI)),
+     Not(calls(i) != NDF))]
+sat
+model: [i = s1,
+ status = [else -> STATUS(INITIATOR(WI))],
+ calls = [else -> NDF]]
+--- 0.016 seconds ---
+
+
+Telephone: proof obligation 20
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(status(i) == STATUS(INITIATOR(SI)),
+     Not(calls(i) != NDF))]
+sat
+model: [i = s1,
+ status = [else -> STATUS(INITIATOR(SI))],
+ calls = [else -> NDF]]
+--- 0.016 seconds ---
+
+
+Telephone: proof obligation 23
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(status(r) == STATUS(RECIPIENT(SR)),
+     Not(And(is_SUBSCRIBER(calls(i)),
+             get_subscriber(calls(i)) == r)))]
+sat
+model: [i = s1,
+ r = s1,
+ status = [else -> STATUS(RECIPIENT(SR))],
+ calls = [else -> NDF]]
+--- 0.015 seconds ---
+

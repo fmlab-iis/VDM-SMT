@@ -1,0 +1,204 @@
+
+*** Telephone: proof obligation 1 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(ForAll(i,
+            Implies(calls(i) != NDF,
+                    Or(And(status(i) ==
+                           STATUS(INITIATOR(WI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(WR))),
+                       And(status(i) ==
+                           STATUS(INITIATOR(SI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(SR)))))),
+     Not(ForAll(i,
+                Implies(calls(i) != NDF, status(i) != NDF))))]
+unsat
+--- 0.032 seconds ---
+
+
+*** Telephone: proof obligation 2 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(ForAll(i,
+            Implies(calls(i) != NDF,
+                    Or(And(status(i) ==
+                           STATUS(INITIATOR(WI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(WR))),
+                       And(status(i) ==
+                           STATUS(INITIATOR(SI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(SR)))))),
+     Not(ForAll(i,
+                Implies(calls(i) != NDF,
+                        Implies(status(i) ==
+                                STATUS(INITIATOR(WI)),
+                                status(get_subscriber(calls(i))) !=
+                                NDF)))))]
+unsat
+--- 0.031 seconds ---
+
+
+*** Telephone: proof obligation 3 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(ForAll(i,
+            Implies(calls(i) != NDF,
+                    Or(And(status(i) ==
+                           STATUS(INITIATOR(WI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(WR))),
+                       And(status(i) ==
+                           STATUS(INITIATOR(SI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(SR)))))),
+     Not(ForAll(i,
+                Implies(calls(i) != NDF,
+                        Implies(status(i) ==
+                                STATUS(INITIATOR(WI)),
+                                calls(i) != NDF)))))]
+unsat
+--- 0.031 seconds ---
+
+
+*** Telephone: proof obligation 4 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(ForAll(i,
+            Implies(calls(i) != NDF,
+                    Or(And(status(i) ==
+                           STATUS(INITIATOR(WI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(WR))),
+                       And(status(i) ==
+                           STATUS(INITIATOR(SI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(SR)))))),
+     Not(ForAll(i,
+                Implies(calls(i) != NDF,
+                        Implies(Not(And(status(i) ==
+                                        STATUS(INITIATOR(WI)),
+                                        status(get_subscriber(calls(i))) ==
+                                        STATUS(RECIPIENT(WR)))),
+                                status(i) != NDF)))))]
+unsat
+--- 0.032 seconds ---
+
+
+*** Telephone: proof obligation 5 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(ForAll(i,
+            Implies(calls(i) != NDF,
+                    Or(And(status(i) ==
+                           STATUS(INITIATOR(WI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(WR))),
+                       And(status(i) ==
+                           STATUS(INITIATOR(SI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(SR)))))),
+     Not(ForAll(i,
+                Implies(calls(i) != NDF,
+                        Implies(Not(And(status(i) ==
+                                        STATUS(INITIATOR(WI)),
+                                        status(get_subscriber(calls(i))) ==
+                                        STATUS(RECIPIENT(WR)))),
+                                Implies(status(i) ==
+                                        STATUS(INITIATOR(SI)),
+                                        status(get_subscriber(calls(i))) !=
+                                        NDF))))))]
+unsat
+--- 0.03 seconds ---
+
+
+*** Telephone: proof obligation 6 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ And(ForAll(i,
+            Implies(calls(i) != NDF,
+                    Or(And(status(i) ==
+                           STATUS(INITIATOR(WI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(WR))),
+                       And(status(i) ==
+                           STATUS(INITIATOR(SI)),
+                           calls(i) != NDF,
+                           status(get_subscriber(calls(i))) ==
+                           STATUS(RECIPIENT(SR)))))),
+     Not(ForAll(i,
+                Implies(calls(i) != NDF,
+                        Implies(Not(And(status(i) ==
+                                        STATUS(INITIATOR(WI)),
+                                        status(get_subscriber(calls(i))) ==
+                                        STATUS(RECIPIENT(WR)))),
+                                Implies(status(i) ==
+                                        STATUS(INITIATOR(SI)),
+                                        calls(i) != NDF))))))]
+unsat
+--- 0.047 seconds ---
+
+
+*** Telephone: proof obligation 7 ***
+
+[ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ ForAll([k, l],
+        If(k == l,
+           calls(k) == calls(l),
+           Or(And(calls(k) == NDF, calls(l) == NDF),
+              calls(k) != calls(l)))),
+ ForAll(i,
+        Implies(calls(i) != NDF,
+                Or(And(status(i) == STATUS(INITIATOR(WI)),
+                       calls(i) != NDF,
+                       status(get_subscriber(calls(i))) ==
+                       STATUS(RECIPIENT(WR))),
+                   And(status(i) == STATUS(INITIATOR(SI)),
+                       calls(i) != NDF,
+                       status(get_subscriber(calls(i))) ==
+                       STATUS(RECIPIENT(SR))))))]
+sat
+model: [calls = [else -> NDF], status = [else -> NDF]]
+--- 0.031 seconds ---
+

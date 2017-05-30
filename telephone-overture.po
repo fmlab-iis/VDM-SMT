@@ -1,0 +1,109 @@
+Generated 27 proof obligations:
+
+Proof Obligation 1: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 17:9
+(forall mk_Exchange(status, calls):EXCH`Exchange & (forall i in set (dom calls) & (i in set (dom status))))
+
+Proof Obligation 2: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 17:30
+(forall mk_Exchange(status, calls):EXCH`Exchange & (forall i in set (dom calls) & ((status(i) = <WI>) => (calls(i) in set (dom status)))))
+
+Proof Obligation 3: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 17:37
+(forall mk_Exchange(status, calls):EXCH`Exchange & (forall i in set (dom calls) & ((status(i) = <WI>) => (i in set (dom calls)))))
+
+Proof Obligation 4: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 19:9
+(forall mk_Exchange(status, calls):EXCH`Exchange & (forall i in set (dom calls) & ((not ((status(i) = <WI>) and (status(calls(i)) = <WR>))) => (i in set (dom status)))))
+
+Proof Obligation 5: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 19:30
+(forall mk_Exchange(status, calls):EXCH`Exchange & (forall i in set (dom calls) & ((not ((status(i) = <WI>) and (status(calls(i)) = <WR>))) => ((status(i) = <SI>) => (calls(i) in set (dom status))))))
+
+Proof Obligation 6: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 19:37
+(forall mk_Exchange(status, calls):EXCH`Exchange & (forall i in set (dom calls) & ((not ((status(i) = <WI>) and (status(calls(i)) = <WR>))) => ((status(i) = <SI>) => (i in set (dom calls))))))
+
+Proof Obligation 7: (Unproved)
+status, status~, calls, calls~, Exchange, Exchange~: state invariant satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 12:8
+(exists status:map (Subscriber) to (Status), calls:inmap (Subscriber) to (Subscriber) & (forall i in set (dom calls) & (((status(i) = <WI>) and (status(calls(i)) = <WR>)) or ((status(i) = <SI>) and (status(calls(i)) = <SR>)))))
+
+Proof Obligation 8: (Unproved)
+Lift: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 27:3
+(forall s:Subscriber, oldstate:EXCH`Exchange & (pre_Lift(s, oldstate) => (exists newstate:EXCH`Exchange & post_Lift(s, oldstate, newstate))))
+
+Proof Obligation 9: (Unproved)
+Connect: enumeration map injectivity obligation @ in 'EXCH' (telephone.vdmsl) at line 38:28
+(((i in set (dom (status :> {<AI>}))) and (r in set (dom (status :> {<fr>})))) => (forall m1, m2 in set {{i |-> <WI>}, {r |-> <WR>}} & (forall d3 in set (dom m1), d4 in set (dom m2) & ((d3 = d4) => (m1(d3) = m2(d4))))))
+
+Proof Obligation 10: (Unproved)
+Connect: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 33:3
+(forall i:Subscriber, r:Subscriber, oldstate:EXCH`Exchange & (pre_Connect(i, r, oldstate) => (exists newstate:EXCH`Exchange & post_Connect(i, r, oldstate, newstate))))
+
+Proof Obligation 11: (Unproved)
+MakeUn: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 41:3
+(forall i:Subscriber, oldstate:EXCH`Exchange & (pre_MakeUn(i, oldstate) => (exists newstate:EXCH`Exchange & post_MakeUn(i, oldstate, newstate))))
+
+Proof Obligation 12: (Unproved)
+Answer: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 50:42
+((r in set (dom (status :> {<WR>}))) => (r in set (dom (inverse calls))))
+
+Proof Obligation 13: (Unproved)
+Answer: map inverse obligation @ in 'EXCH' (telephone.vdmsl) at line 50:42
+((r in set (dom (status :> {<WR>}))) => is_(calls, inmap (Subscriber) to (Subscriber)))
+
+Proof Obligation 14: (Unproved)
+Answer: enumeration map injectivity obligation @ in 'EXCH' (telephone.vdmsl) at line 50:28
+((r in set (dom (status :> {<WR>}))) => (forall m1, m2 in set {{r |-> <SR>}, {(inverse calls)(r) |-> <SI>}} & (forall d3 in set (dom m1), d4 in set (dom m2) & ((d3 = d4) => (m1(d3) = m2(d4))))))
+
+Proof Obligation 15: (Unproved)
+Answer: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 46:3
+(forall r:Subscriber, oldstate:EXCH`Exchange & (pre_Answer(r, oldstate) => (exists newstate:EXCH`Exchange & post_Answer(r, oldstate, newstate))))
+
+Proof Obligation 16: (Unproved)
+ClearAttempt: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 52:3
+(forall i:Subscriber, oldstate:EXCH`Exchange & (pre_ClearAttempt(i, oldstate) => (exists newstate:EXCH`Exchange & post_ClearAttempt(i, oldstate, newstate))))
+
+Proof Obligation 17: (Unproved)
+ClearWait: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 61:41
+((i in set (dom (status :> {<WI>}))) => (i in set (dom calls)))
+
+Proof Obligation 18: (Unproved)
+ClearWait: enumeration map injectivity obligation @ in 'EXCH' (telephone.vdmsl) at line 61:28
+((i in set (dom (status :> {<WI>}))) => (forall m1, m2 in set {{i |-> <fr>}, {calls(i) |-> <fr>}} & (forall d3 in set (dom m1), d4 in set (dom m2) & ((d3 = d4) => (m1(d3) = m2(d4))))))
+
+Proof Obligation 19: (Unproved)
+ClearWait: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 57:3
+(forall i:Subscriber, oldstate:EXCH`Exchange & (pre_ClearWait(i, oldstate) => (exists newstate:EXCH`Exchange & post_ClearWait(i, oldstate, newstate))))
+
+Proof Obligation 20: (Unproved)
+ClearSpeak: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 68:41
+((i in set (dom (status :> {<SI>}))) => (i in set (dom calls)))
+
+Proof Obligation 21: (Unproved)
+ClearSpeak: enumeration map injectivity obligation @ in 'EXCH' (telephone.vdmsl) at line 68:28
+((i in set (dom (status :> {<SI>}))) => (forall m1, m2 in set {{i |-> <fr>}, {calls(i) |-> <un>}} & (forall d3 in set (dom m1), d4 in set (dom m2) & ((d3 = d4) => (m1(d3) = m2(d4))))))
+
+Proof Obligation 22: (Unproved)
+ClearSpeak: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 64:3
+(forall i:Subscriber, oldstate:EXCH`Exchange & (pre_ClearSpeak(i, oldstate) => (exists newstate:EXCH`Exchange & post_ClearSpeak(i, oldstate, newstate))))
+
+Proof Obligation 23: (Unproved)
+Suspend: legal map application obligation @ in 'EXCH' (telephone.vdmsl) at line 75:42
+((r in set (dom (status :> {<SR>}))) => (r in set (dom (inverse calls))))
+
+Proof Obligation 24: (Unproved)
+Suspend: map inverse obligation @ in 'EXCH' (telephone.vdmsl) at line 75:42
+((r in set (dom (status :> {<SR>}))) => is_(calls, inmap (Subscriber) to (Subscriber)))
+
+Proof Obligation 25: (Unproved)
+Suspend: enumeration map injectivity obligation @ in 'EXCH' (telephone.vdmsl) at line 75:28
+((r in set (dom (status :> {<SR>}))) => (forall m1, m2 in set {{r |-> <WR>}, {(inverse calls)(r) |-> <WI>}} & (forall d3 in set (dom m1), d4 in set (dom m2) & ((d3 = d4) => (m1(d3) = m2(d4))))))
+
+Proof Obligation 26: (Unproved)
+Suspend: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 71:3
+(forall r:Subscriber, oldstate:EXCH`Exchange & (pre_Suspend(r, oldstate) => (exists newstate:EXCH`Exchange & post_Suspend(r, oldstate, newstate))))
+
+Proof Obligation 27: (Unproved)
+ClearUn: operation postcondition satisfiable obligation @ in 'EXCH' (telephone.vdmsl) at line 77:3
+(forall s:Subscriber, oldstate:EXCH`Exchange & (pre_ClearUn(s, oldstate) => (exists newstate:EXCH`Exchange & post_ClearUn(s, oldstate, newstate))))
