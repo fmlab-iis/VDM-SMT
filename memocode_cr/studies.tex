@@ -1,0 +1,600 @@
+This section gives studies that apply our approach to selected VDM-SL models and discusses the results\footnote{All the selected VDM-SL models can be found in Overture repository: {\tt http://overturetool.org/download/examples/VDMSL/}, and the encoding and results with Z3py can be founded in our repository: {\tt https://github.com/fmlab-iis/VDM-SMT}}.
+
+\subsection{Abstract Pacemaker}
+\label{section:case1}
+
+The first case is a small VDM-SL model specifies an abstract pacemaker. The model is not a full specification and focuses on the part of definitions and operations related to heartbeat signals detected and recorded in a pacemaker. For this model of 58 lines, Overture generated nine POs. Here we report the encoding and solving of obligations PO8 and PO3 below.
+
+\subsubsection{Proof Obligation 8}
+
+PO8 shown in Fig.~\ref{fig:po8_case1} is a legal sequence application obligation of operation {\tt Pace}.  PO8 requires that the formula specified with trace {\tt tr} of type {\tt Trace} be legal, i.e., computable to get its result. For more understanding of PO8, we may take a look on the definition of the operation {\tt Pace} as shown in Fig.~\ref{fig:pace_case1}. {\tt Pace} is an explicitly specified operation and takes three arguments of types {\tt Trace}, {\tt nat1}, and {\tt nat1}. It is easy to recognize that PO8 is checking about the sequence used in line 4 of PO8 in Fig.~\ref{fig:pace_case1}. Note that to discharge PO8, we do not need the full definition of {\tt Pace}.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+(forall tr:Trace, aperi:nat1, vdel:nat1,
+  oldstate & 
+    (forall i in set (inds (tl tr)) &
+      (((i mod aperi) = (vdel + 1)) =>
+        (i in set (inds tr)))
+))
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Proof Obligation 8 of Abstract Pacemaker}
+\label{fig:po8_case1}
+\end{center}
+% \vspace{-20pt}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+Pace: Trace * nat1 * nat1 ==> Trace
+Pace(tr,aperi,vdel) ==
+  return [nil] ^
+     [ if (i mod aperi = vdel + 1) and
+          tr(i) <> <V> 
+       then <V> else nil
+     | i in set inds tl tr];
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Pace of Abstract Pacemaker}
+\label{fig:pace_case1}
+\end{center}
+\vspace{-20pt}
+\end{figure}
+
+As described in Section~\ref{section:encode-strategy}, the first step of encoding is to determine the context information of PO8. To decide what to include as the context information, we firstly examine the types used in PO8: {\tt nat1} and {\tt Pace}. {\tt nat1} is a type of natural numbers that excludes zero and starts from one. {\tt nat1} is a primitive type of VDM so we do not need more information about it. {\tt Pace} is a user-defined VDM type so we have check its specification in the VDM-SL model. Below shows the type definition of {\tt Trace}. Note that {\tt oldstate} bounded by the forall quantifier is never used in the predicate of PO8 and therefore will be ignored in the encoding.
+
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+  Trace = seq of [Event];
+  Event = <A> | <V>;
+\end{Verbatim}
+\end{mdframed}
+
+{\tt Trace} is of type sequence of {\tt Event}, where {\tt Event} is of quote type with two values {\tt <A>} and {\tt <V>} that stand for the A-pace and V-pace of heartbeat signals. At this point, we have necessary context information needed for discharging PO8, and we may proceed to the next step: encoding context information. For PO3, we need to encode types used in PO8: {\tt nat1} and {\tt Trace}. {\tt nat1} is the natural number that excludes zero, so the encoding of {\tt nat1} is as follows. 
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+  aperi = Int('aperi')
+  s.add(aperi>=1)
+  vdel = Int('vdel')
+  s.add(vdel>=1)
+\end{Verbatim}
+\end{mdframed}
+
+As the above code shows, we defined two instances of integer in Z3, {\tt aperi} and {\tt vdel}. Recall that in Z3, we cannot add constraints to types but instances, so the constraint of greater and equal to one is added twice to the solver object for both {\tt aperi} and {\tt vdel}. The remaining type not encoded yet is {\tt Trace}, the sequence type. We defined {\tt Event} firstly since {\tt Trace} is a trace of {\tt Event}. The code below shows the encoding of {\tt Event} and {\tt Trace}. Since {\tt Trace} is not exactly the sequence of {\tt Event} but {\tt [Event]} (a union with {\tt nil}), we did not define {\tt Event} but define {\tt [Event]} directly. Furthermore, a type in VDM can be undefined because of VDM's logic of partial functions. This means that besides predefined values as in the specification, we have to consider the case that the value is undefined. In our work, we used {\tt NDF} to represent the undefined value of {\tt Event}, and defined {\tt Event\_lift} in Z3. The postfixed {\tt \_lift} indicates that we have considered the undefined value.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+  Event_lift, (A, V, nil, NDF) = 
+    EnumSort('Event_lift', 
+            ['A', 'V', 'nil', 'NDF'])
+
+  Trace = ArraySort(IntSort(),Event_lift)
+\end{Verbatim}
+\end{mdframed}
+
+In the above encoding, {\tt Trace} is encoded as an array type in Z3 and this array type is by default indexed through the integer domain. An array type can not be a sequence type unless we add constraints regarding sequences to limit an array to a sequence. The idea of adding constraints is the same as the encoding of {\tt nat1} but more complicated. Fig.~\ref{fig:tr_constraint_case1} shows the encoding of the constraint to {\tt tr}, the instance of {\tt Trace} as an array. Note again that the constraints are applied on {\tt tr}, the instance of {\tt Trace}, not the type {\tt Trace}. As shown in Fig.~\ref{fig:tr_constraint_case1}, we added three constraints: 
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+  tr = Const('tr',Trace)
+  [i,j] = Ints('i j')
+
+  ForAll(i, Implies( i<=0, tr[i]==NDF ) )
+
+  ForAll(i,
+    Implies(
+      And(i>=1,tr[i]!=NDF),
+      ForAll(j,
+        Implies(And(j>=1,j<=i),tr[j]!=NDF)
+      )
+    )
+  )
+
+  ForAll(i,
+    Implies(
+      And(i>=1,tr[i]==NDF),
+      ForAll(j,
+        Implies(j>=i,tr[j]==NDF)
+      )
+    )
+  )
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Encode constraints for {\tt tr:Trace} in Z3py}
+\label{fig:tr_constraint_case1}
+\end{center}
+\vspace{-20pt}
+\end{figure}
+
+
+
+\begin{itemize}
+\item
+The first constraint (line 4) says that all indices of {\tt tr} less than 1 should be undefined because, in VDM-SL, a sequence's index starts from 1.
+\item
+The second constraint (lines 6-13) says that if an index is defined, i.e., not undefined, all indices lower than it should be all defined.
+\item
+The third constraint (line 15-22) says tat if an index is undefined, all indices greater than it should be all undefined.
+\end{itemize}
+
+From the above three constraints, we limited an array ({\tt tr}) to a sequence that starts from index 1 to its last element. Now we have encoded both types {\tt nat1} and {\tt Trace} used in PO8. Before proceed to encode the obligation, it is necessary to encode the function {\tt len} that computes the length of a sequence. As shown in Fig.~\ref{fig:tr_len_case1}, we defined an uninterpreted function {\tt len\_tr} for {\tt tr}, the instance of {\tt Trace}. Line 1 is the type declaration of {\tt len\_tr} which is an uninterpreted function taking an argument of a {\tt Trace} type and returning an integer type. Similar to defining constraints for {\tt tr:Trace}, we gave {\tt len\_tr} the constraint considering two cases: the length of a sequence can be equal or greater than 0.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+len_tr=Function('len_tr',Trace,IntSort())
+
+Or(
+  And(
+    len_tr(tr)==0,
+    tr[1]==NDF
+  ),
+  And(
+    len_tr(tr)>0,
+    tr[len_tr(tr)]!=NDF,
+    tr[len_tr(tr)+1]==NDF
+  )
+)
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Encode {\tt len\_tr} for {\tt tr:Trace} in Z3py}
+\label{fig:tr_len_case1}
+\end{center}
+\end{figure}
+
+\begin{enumerate}
+\item
+(lines 4-7) If {\tt len\_tr} returns 0, then {\tt tr} is a sequence with no element. That is, {\tt tr[1]} has to be undefined so that all indices of {\tt tr} are then undefined based on previous constraints of {\tt tr}. 
+\item
+(line 8-12) If {\tt len\_tr} returns an integer greater than 0, then {\tt tr} has defined elements till its length index {\tt len\_tr(tr)} such that the element at and after index {\tt len\_tr(tr)+1} should be undefined. 
+\end{enumerate}
+
+At this point, we have defined types and constraints needed for encoding PO8. According to the steps described in Section~\ref{section:encode-strategy}, we now proceed to the next step: obligation negation. The negated PO8 is shown in Fig.~\ref{fig:po8_negation_case1}. Compare to the original PO8 in Fig.~\ref{fig:po8_case1}, the obligation negation also eliminated the forall quantifier. The negated PO8 can be recognized as the formula $\exists~[tr:Trace,aperi:nat1,vdel:nat1,i:nat] P \land Q \land \neg R$ where $P$, $Q$, and $\neg R$ can be encoded separately.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+Exists tr:Trace, aperi:nat1, vdel:nat1 &
+  (Exists i in set (inds (tl tr)) &
+     Not(
+      ((i mod aperi) = (vdel + 1)) =>
+       (i in set (inds tr))
+     )
+  )
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Obligation negation of PO8}
+\label{fig:po8_negation_case1}
+\end{center}
+\vspace{-20pt}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+  And(aperi>=1,vdel>=1)        #nat1
+  And(i>=1, i<=len_tr(tr)-1)   #P
+  i%aperi==vdel+1              #Q
+  Not(And(i>=1,i<=len_tr(tr))) #not R
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Encoded formulas of PO8 in Z3py}
+\label{fig:po8_encoded_case1}
+\end{center}
+% \vspace{-20pt}
+\end{figure}
+
+Finally, we encoded the negated PO8 as the Z3py code shown in Fig.~\ref{fig:po8_encoded_case1}. The encoding has four constraints: two {\tt nat1} variables (line 1); encoding of $P$ ({\tt i in set (inds (tl tr)}) that is actually indices from 1 to {\tt len tr -1} (line 2); encoding of $Q$ ({\tt (i mod aperi) = (vdel + 1)}) (line 3); encoding of $\neg R$ ({\tt not(i in set (inds tr))}) (line 4). Note that {\tt hd} and {\tt tl tr} are operators of the head and tail of a sequence, and {\tt inds} is the operator of gathering indices of defined elements of a sequence and returns a set of natural numbers. Also, note that in the encoding in Fig.~\ref{fig:po8_encoded_case1}, we did not explicitly encode {\tt hd}, {\tt tl}, and {\tt inds} and simplified the results of these operators as constraints related to ranges (upper and lower bound) of {\tt tr}. The encoded PO8 (negated) was checked by the solver object in Z3py for satisfiability. The result was {\tt unsat}, which means that PO8 was proved.
+
+
+\subsubsection{Proof Obligation 3}
+
+PO3 of the abstracted pacemaker model is the postcondition satisfiable obligation of the implicitly specified operation {\tt FaultHeart} that generates a trace of heart pulse signals. PO3 says that the postcondition of {\tt FaultHeart} has to be satisfiable so that the specification of {\tt FaultHeart} is implementable. Fig.~\ref{fig:po3_case1} shows PO3 along with the specification of state {\tt Pacemaker} and operation {\tt FaultyHeart}.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+exists tr:Trace &
+  post_FaultyHeart(oldstate, tr, newstate)
+
+state Pacemaker of
+    aperiod : nat 
+    vdelay  : nat
+  init p == p = mk_Pacemaker(15,10)
+  end
+
+FaultyHeart() tr : Trace
+post len tr = 100 and
+  Periodic(tr,<A>,aperiod) and 
+  not Periodic(tr,<V>,aperiod);
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{PO3, State {\tt Pacemaker}, and operation {\tt FaultyHeart} of Abstraced Pacemaker}
+\label{fig:po3_case1}
+\end{center}
+\vspace{-20pt}
+\end{figure}
+
+The state {\tt Pacemaker} is specified as a pair of natural numbers {\tt aperiod} and {\tt vdelay}. The postcondition of {\tt FaultyHeart} is not specified with {\tt oldstate} which has a suffixed tilde, i.e, {\tt aperiod\textasciitilde} and {\tt vdelay\textasciitilde}. Therefore, PO3 is a simplified postcondition satisfiable obligation saying that there exists a {\tt Trace} {\tt tr} which satisfies the postcondition specified with only {\tt newstate}\footnote{How the {\tt newstate} is calculated from {\tt oldstate} is not specified in {\tt FaltyHeart}.}. The postcondition of {\tt FaultyHeart} calls the function {\tt Periodic} twice with three arguments. {\tt Periodic} shown below is an explicitly specified function and returns a boolean value. Therefore, state {\tt Pacemaker}, {\tt post\_FaultyHeart} (postcondition of {\tt FaultyHeart}), and function {\tt Periodic} are the context information of PO3. 
+
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+Periodic: Trace * Event * nat1 -> bool
+Periodic(tr,e,p) ==
+  forall t in set inds tr &
+   (tr(t) = e) =>
+   (t + p <= len tr =>
+   ((tr(t+p) = e and
+     forall i in set {t+1, ..., t+p-1} &
+       tr(i) <> e)) and
+    (t + p > len tr =>
+     forall i in set {t+1, ..., len tr} &
+       tr(i) <> e));
+\end{Verbatim}
+\end{mdframed}
+
+Though the specification of {\tt Periodic} is relatively long, the encoding of {\tt Periodic} is similar to the encoding of PO8. It is easy to observe similar computations on the trace {\tt tr} such as {\tt in set inds tr} and {\tt len tr}, and we can encode them in the same way as the encoding of PO8. Note that the type {\tt Trace} is again needed in proving PO3 so that the corresponding encoding in PO8 can be used again as constraints here. In the case of PO3, we did not apply negation to the formula since existence quantifier in the prefix of a formula is preferred in Z3. As a result, we got a result of {\tt sat} along with a model that satisfies PO3. Therefore, PO3 was proved.
+
+The results of all nine POs of the Abstracted Pacemaker VDM-SL model is showed in Table~\ref{tbl:result1} with information of whether negation is applied, and the time used.
+
+\begin{table}[htb]
+\begin{center}
+\begin{tabular}{|c|c|r|r|}
+\hline
+PO\#	&	negated	&	result	&	time (sec.) \\ \hline
+1		&	Y		&	sat		&	0.031 \\ \hline
+2		&	Y		&	unsat	&	0.031 \\ \hline
+3		&	N		&	sat		&	15.109 \\ \hline
+4		&	Y		&	unsat	&	0.032 \\ \hline
+5		&	Y		&	unsat	&	0.046 \\ \hline
+6		&	Y		&	unsat	&	0.048 \\ \hline
+7		&	Y		&	unsat	&	0.062 \\ \hline
+8		&	Y		&	unsat	&	0.031 \\ \hline
+9		&	Y		&	sat		&	0.047 \\ \hline
+\end{tabular}
+\end{center}
+\caption{Absract Pacemaker Result}
+\label{tbl:result1}
+\vspace{-20pt}
+\end{table}
+
+
+\subsection{Telephone Exchange}
+\label{section:case2}
+
+This model specifies an abstracted telephone exchange system. In this model, the operations specify the events which can be initiated either by the system or by a subscriber (user) with implicit style. The system state monitors the calling status of users and the connecting status among users. Overture tool generated 27 POs, and we selected PO1 and PO14 to report the case study.
+
+\subsubsection{Proof Obligation 1}
+
+PO1 shown in Fig.~\ref{fig:po1_case2} is a legal map application obligation that checks whether maps in the system state are applicable. In PO1, state {\tt Exchange} which is a record type of {\tt status} and {\tt calls} is mentioned. Therefore, the context information of PO1 is the state {\tt Exchange} including its invariant. Fig.~\ref{fig:types_case2} shows the specification of state {\tt Exchange} with corresponding quote types. The state {\tt Exchange} contains two maps: {\tt status} indicates the discrete calling status of users, and is a map from {\tt Subscriber} to {\tt Status}; {\tt calls} models the connection relation of users, i.e., which users are connected, and is a map from {\tt Subscriber} to {\tt Subscriber}. Note that {\tt calls} is specified as {\tt inmap} type which means a one-to-one map. This means if a user is calling another user, both of the users can not have other connections to third party users. Also, {\tt Exchange} has state invariant specifying the relations between connections of users and their calling status. At this point, the context information of PO1 is determined.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+forall
+  mk_Exchange(status, calls):EXCH`Exchange &
+    (forall i in set (dom calls) &
+      (i in set (dom status))
+    )
+)
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{PO1 of Telephone Exchange}
+\label{fig:po1_case2}
+\end{center}
+\vspace{-10pt}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+Subscriber = token;
+Initiator =  <AI> | <WI> | <SI>;
+Recipient = <WR> | <SR>;
+Status = <fr> | <un> |
+         Initiator | Recipient;
+                                                                      
+state Exchange of
+  status: map Subscriber to Status
+  calls:  inmap Subscriber to Subscriber
+inv mk_Exchange(status, calls) == 
+  forall i in set dom calls & 
+    (status(i) = <WI> and
+     status(calls(i)) = <WR>) or
+    (status(i) = <SI> and
+     status(calls(i)) = <SR>)
+init s == s = mk_Exchange({|->},{|->})
+end
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Types and state of Telephone Exchange}
+\label{fig:types_case2}
+\end{center}
+\vspace{-20pt}
+\end{figure}
+
+The strategy of encoding the types shown in Fig.~\ref{fig:types_case2} is (1) applying user-defined types in Z3 to encode the quote types; (2) applying uninterpreted functions to encode map type. In Fig.~\ref{fig:encode_types_case2}, we demonstrate the encoding of selected types. In Fig.~\ref{fig:encode_types_case2}, the type {\tt Recipient} is defined as an user-defined type with values {\tt WR} and {\tt SR}. Type {\tt Status} is further defined as a user-defined type including {\tt Recipient} and {\tt Initiator}. Though {\tt Status} is a union type combines {\tt Initiator} and {\tt Recipient}, which can be considered an enumeration, we encoded {\tt Status} using user-defined type style in Z3py. The reason is that we prefer the subtypes {\tt Initiator} and {\tt Status} can be distinguishable in Z3.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+Recipient = Datatype('Recipient')
+Recipient.declare('WR')
+Recipient.declare('SR')
+Recipient = Recipient.create()
+
+Status = Datatype('Status')
+Status.declare('fr')
+Status.declare('un')
+Status.declare('INITIATOR',
+               ('get_initiator', Initiator))
+Status.declare('RECIPIENT',
+               ('get_recipient', Recipient))
+Status = Status.create()
+
+Status_lift = Datatype('Status_lift')
+Status_lift.declare('STATUS',
+                    ('get_status', Status))
+Status_lift.declare('NDF')
+Status_lift = Status_lift.create()
+
+status = Function('status',
+                  Subscriber,Status_lift)
+calls = Function('calls',
+                 Subscriber,Subscriber_lift)
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Encoding of quote and map types in Fig.\ref{fig:types_case2} (partial)}
+\label{fig:encode_types_case2}
+\end{center}
+\vspace{-15pt}
+\end{figure}
+
+Because of VDM's logic of partial functions, for the type to be declared as the range of the map, i.e., {\tt Subscriber} and {\tt Status}, we defined their lifted types in Z3py to take into consideration the case that the value of a key of a map is undefined. Also, though {\tt Subscriber} is of token type which does not have specific values when declared, we treated token types as quote types with a predefined domain of values such as {\tt S1}, {\tt S2}. The two maps {\tt status} and {\tt calls} in the state {\tt Exchange} are encoded as uninterpreted functions and the state invariant is encoded by the encoded (and lifted) types mentioned above. 
+
+Fig.~\ref{fig:encode_state_inv_case2} shows the encoding of the state invariant. Note that the encoding of {\tt i in set (dom calls)} (line 11 of Fig.~\ref{fig:types_case2}) is encoded as {\tt calls(i)!=Subscriber\_lift.NDF} (line 3 of Fig.~\ref{fig:encode_state_inv_case2}) because the set inclusion only means that the domain (key) of {\tt calls} has defined value in the range of {\tt calls}. Therefore, we do not have to encode the set of domain neither the set inclusion operator. The condition that the range value of a map is defined or not is essential here. For example, to encode {\tt status(calls(i)) = <WR>} (line 13 of Fig.~\ref{fig:types_case2}), we have to ensure the condition that {\tt calls(i)} is defined so that additional constraint {\tt calls(i)!=Subscriber\_lift.NDF} (line 9 of Fig.~\ref{fig:encode_state_inv_case2}) is added.
+
+% Instead of demonstrate the full encoding of the invariant, we only demonstrate the key encoding on {\tt i in set (dom calls)} and {\tt i in set (dom status)}. Though there is set inclusion used, instead of defining a set, we can encode the set inclusion as whether {\tt calls(i)} is defined or not.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+ForAll(i,
+  Implies(
+  calls(i)!=Subscriber_lift.NDF,
+  Or(
+    And(
+      status(i)==
+        Status_lift.STATUS(
+        Status.INITIATOR(Initiator.WI)),
+	  calls(i)!=Subscriber_lift.NDF,
+      status(Subscriber_lift.
+        get_subscriber(calls(i)))==
+        Status_lift.STATUS(
+          Status.RECIPIENT(Recipient.WR))),
+    And(
+      status(i)==
+        Status_lift.STATUS(
+        Status.INITIATOR(Initiator.SI)),
+      calls(i)!=Subscriber_lift.NDF,
+      status(Subscriber_lift.
+        get_subscriber(calls(i)))==
+        Status_lift.STATUS(
+          Status.RECIPIENT(Recipient.SR)))
+)))
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Encoding of state invariant of Telephone Exchange}
+\label{fig:encode_state_inv_case2}
+\end{center}
+% \vspace{-20pt}
+\end{figure}
+
+Recall that {\tt calls} is defined as {\tt inmap}, a one-to-one map. Thus, we had to add  the conditions about {\tt inmap} as context information: for any two different users, either both users calls no one (undefined) or they are calling different users. Note that the latter case also includes the situation that only one of the two users is connecting to a third party user and the other user is calling no one.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+k  = Const('k',Subscriber)
+l  = Const('l',Subscriber)
+ForAll([k,l],
+  If(
+    k==l,
+    calls(k)==calls(l),
+    Or(
+      And(
+        calls(k)==Subscriber_lift.NDF,
+        calls(l)==Subscriber_lift.NDF
+      ),
+      calls(k)!=calls(l)
+    )
+  )
+)
+\end{Verbatim}
+\end{mdframed}
+
+The encoding of PO1 is done by encoding the negated formula of PO1. As the following code shows, the outside forall in the formula of PO1 is eliminated by obligation negation. The result was {\tt unsat} which means PO1 was proved.
+
+% \begin{mdframed}[roundcorner=5pt,shadow=true]
+% \begin{Verbatim}[fontsize=\small]
+%   calls(i) != Subscriber_lift.NDF
+%   status(i)!= Status_lift.NDF
+% \end{Verbatim}
+% \end{mdframed}
+
+% For PO1, we applied negation to the formula so that the {\tt forall} quantifier for maps {\tt calls} and {\tt status} is removed. The result was {\tt unsat} which means PO1 was proved.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+Not(
+  ForAll(i,
+    Implies(
+      calls(i)!=Subscriber_lift.NDF,
+      status(i)!=Status_lift.NDF
+    )
+  )
+)
+\end{Verbatim}
+\end{mdframed}
+
+
+\subsubsection{Proof Obligation 14}
+
+PO14 shown in Fig.~\ref{fig:PO14_case2} is an enumeration map injectivity obligation of the operation {\tt Answer} of the system. PO14 has free variables, {\tt r} and {\tt status}, in its formula. These free variables are treated as forall quantifier bounded. There are also intermediate variables in the formula such as {\tt m1}, {\tt m2}, {\tt d3}, and {\tt d4}. Note that the map inverse function {\tt inverse} (line 4) and the range restriction operator `{\tt :>}' (line 1) are applied to {\tt calls} and {\tt status} separately. (Recall that {\tt calls} is a one-to-one map {\tt inmap}.) The context information of PO14 includes the two maps {\tt status} and {\tt calls} but not the state {\tt Exchange} because {\tt Exchange} is not mentioned in PO14. Therefore, only the two maps have to be encoded, and the state invariant is excluded in the encoding. The encoding of the constraints for {\tt calls} of type {\tt inmap} described in solving PO1 can be reused here.
+
+\begin{figure}[t]
+\begin{center}
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+(r in set (dom (status :> {<WR>}))) =>
+  (forall m1, m2 in 
+    set {{r |-> <SR>}, 
+         {(inverse calls)(r) |-> <SI>}} &
+    (forall d3 in set (dom m1),
+            d4 in set (dom m2) &
+      ((d3 = d4) => (m1(d3) = m2(d4)))
+))
+\end{Verbatim}
+\end{mdframed}
+\vspace{-10pt}
+\caption{Encoding of state invariant of Telephone Exchange}
+\label{fig:PO14_case2}
+\end{center}
+\vspace{-25pt}
+\end{figure}
+
+When encoding the formula of PO14, firstly, we negated PO14 and eliminated the forall quantifiers. To encode the negated formula of PO14, a similar technique for  encoding {\tt set (dom status)} in PO1 can be applied. For the range restriction function, since the range is a singleton set with an element {\tt <WR>}, we do not have to encode the set notations and only limit the map's range {\tt status(r)} to {\tt <WR>}. Thus, {\tt r in set (dom (status :> \{<WR>\}))} is encoded as follows.
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small]
+status(r)==
+  Status_lift.STATUS(
+    Status.RECIPIENT(Recipient.WR) )
+\end{Verbatim}
+\end{mdframed}
+
+For the map inverse function, we did not define a new map as the inverse of {\tt calls}, but encoded {\tt m1 = \{(inverse calls)(r) |-> <SI>\}} as a case of {\tt m1 in set \{\{r |-> <SR>\}, \{(inverse calls)(r) |-> <SI>\}\}}. The case was encoded as the collection of several conditions. 
+
+\begin{mdframed}[roundcorner=5pt,shadow=true]
+\begin{Verbatim}[fontsize=\small,numbers=left]
+# ensure the inverse map is not empty
+calls(i)!=Subscriber_lift.NDF 
+# inverse_calls(r) == i
+Subscriber_lift.get_subscriber(calls(i))==r
+
+m1(i)==Status_lift.STATUS(
+         Status.INITIATOR(Initiator.SI)),
+
+ForAll(k, 
+  Implies(k!=i, m1(k)==Status_lift.NDF) )
+\end{Verbatim}
+\end{mdframed}
+
+In above code, the first two conditions (lines 1-4) promise that (1) the part of map, where key {\tt i} is used and {\tt inverse} is applied, has to be defined; (2) the domain key of the inversed map, i.e., the range value of the original map, is {\tt r}. Then {\tt m1(i)} where key {\tt i} is referred should be {\tt <SI>} (lines 6-7). (3) the last condition guarantees that {\tt m1} should be undefined for all indices except {\tt i} (lines 9-10) because {\tt m1} is a single map that has only one key and one value.
+
+The result of checking PO14 (negated) was expected to be {\tt unsat}, but we got {\tt sat} instead. Z3 returned a model that satisfies the negated formula of PO14. After examined the model returned by Z3, we found that {\tt calls} in the returned model, {\tt calls} is a map where users call themselves. This does not violate the type constraint of {\tt inmap}, but a user is not allowed to call him/her-self in a telephone exchange system. Therefore, the checking of PO14 suggested that we should add a constraint on {\tt calls} to the VDM-SL model. We may add the constraint below as the type invariant of {\tt calls} or add it to the state invariant\footnote{We have added the constraint and checked again, and PO14 was proved successfully.}.
+
+\begin{mdframed}[roundcorner=5pt]
+\begin{Verbatim}[fontsize=\small]
+forall i in set dom calls & calls(i) != i
+\end{Verbatim}
+\end{mdframed}
+
+In this case study, we did not check all the twenty-seven POs since the encoding demonstrated in this paper could not cover all POs. The main issue is that the maps are encoded as uninterpreted functions, which cannot be used with {\tt forall} quantifier. This results that we could not check the postcondition satisfiable obligations of this model with the current encoding\footnote{Besides postcondition satisfiable obligations, there are two POs with type check function {\tt is\_(name, type)}, for which Z3 encoding is not available and then skipped.}. After all, we successfully checked 16 out of all 27 POs for the telephone exchange VDM-SL model. The results of 16 POs checked of the Telephone Exchange VDM-SL model is showed in Table~\ref{tbl:result2} with information of whether negation is applied, and the time used.
+
+% total check result (table)
+%
+\begin{table}[htb]
+\begin{center}
+\begin{tabular}{|c|c|r|r|}
+\hline
+PO\#	&	negated	&	result	&	time (sec.) \\ \hline
+1		&	Y		&	unsat	&	0.032 \\ \hline
+2		&	Y		&	unsat	&	0.031 \\ \hline
+3		&	Y		&	unsat	&	0.031 \\ \hline
+4		&	Y		&	unsat	&	0.032 \\ \hline
+5		&	Y		&	unsat	&	0.03 \\ \hline
+6		&	Y		&	unsat	&	0.047 \\ \hline
+7		&	N		&	sat		&	0.031 \\ \hline
+9		&	Y		&	unsat	&	0.047 \\ \hline
+12		&	Y		&	sat		&	0.015 \\ \hline
+14		&	Y		&	sat		&	0.063 \\ \hline
+17		&	Y		&	sat		&	0.016 \\ \hline
+18		&	Y		&	unsat	&	0.047 \\ \hline
+20		&	Y		&	sat		&	0.016 \\ \hline
+21		&	Y		&	unsat	&	0.046 \\ \hline
+23		&	Y		&	sat		&	0.015 \\ \hline
+25		&	Y		&	sat		&	0.063 \\ \hline
+\end{tabular}
+\end{center}
+\caption{Telephone Exchange Result}
+\label{tbl:result2}
+\vspace{-20pt}
+\end{table}
+
+
+
+% Overture generated 27 POs for this model. These POs can be divided into several groups as showed below. In this case study we encoded and checked the first three groups using the above encoding of types. The reason of not handling the postcondition obligations is that the maps defined using uninterpreted functions cannot be used together with quantifiers. Also, map inverse obligations have {\tt is\_(name, type)}, the function of type check provided by VDM, in their formulas. There is no appropriate encoding for such type check functions in Z3. 
+
+% \begin{enumerate}
+% \item
+% Legal map application obligations, invariant satisfiable obligations: 1 to 7.
+% \item
+% Enumeration map injectivity obligations: 9, 14, 18, 21, 25.
+% \item
+% Legal map application obligations with inverse map: 12, 17, 20, 23.
+% \item
+% Operation postcondition satisfiable obligations: 8, 10, 11, 15, 16, 19, 22, 26, 27
+% \item
+% Map inverse obligations: 13, 24.
+% \end{enumerate}
+
+\subsection{Discussion}
+
+As an overall result of our case studies, the objective of our approach that to discharge POs of a VDM-SL model as many as possible is considered achieved. In the first case study (Abstracted Pacemaker), we discharged all nine POs; in the second case study, we discharged 16 POs our of total 27 POs (about 60\%). To increase the percentage of discharging POs, we may further apply different encoding, for example, encoding maps using arrays in Z3, to solve remaining POs in the Telephone Exchange case study.
+
+% Usability and Applicability of the Encode Style
+The two case studies demonstrated the application of the encode strategy described in Section~\ref{section:encode-strategy}. From our experiences, the cost and complexity of encoding varies from specifications in a VDM-SL model. Usually, the complexity of encoded formulas usually depends on the complexity of VDM-SL types. For example, natural number based types such as {\tt seq of nat} or {\tt map from nat to nat} have less complexity, and one may encode and solve this kind of types with SMT solvers without difficulty. On the contrary, for VDM types such as a map of sequences or a set of maps, the encoding may be difficult, and the complexity of the encoded formulas may grow a lot.
+
+The encoding demonstrated in the two case studies also showed some encoding patterns. For example, the encoding of union type and quote type with user-defined types or enumeration type, and the encoding of maps with uninterpreted functions, are useful to encoding POs of other VDM-SL models. Also, the encoding patterns like the constraints on arrays to represent a sequence, set inclusion of indices of a sequence, or set inclusion of domain/range of a map, are also reusable. In our case studies, these encoding patterns are applied multiple times. 
+
+% Automation of the encoding style and strategy
+Though the encoding patterns are useful, applying the encoding patterns still depends on specification of VDM models because the encoding patterns are not fully systemic or syntax-based. Considering automated encoding of POs with related context information, the encoding of types may be fine, but encoding expressions remains difficult and rely on manually applying encoding patterns.
+
+% Scalability and Efficiency}
+Our case studies also showed the efficiency of SMT solvers can do great help in discharging POs. Also, the counterexample (model) generation of SMT solvers provides helpful hints for revision and correction of VDM models. As reported in Section~\ref{section:case2}, encoding and solving PO14 of the telephone exchange VDM-SL model found an inconsistency and the counterexample provided guidance to dissolving the inconsistency. Finally, the scalability of our approach is not serious because we only encode the formula of a PO and its context information. The size of VDM-SL code to be encoded does not escalate with the size of a VDM-SL model.
+
+% \footnote{A previous work~\cite{kenneth:ifm2013} that translates VDM-SL to Alloy~\cite{kenneth:ifm2013} checked the VDM-SL model and found a different problem. The model (from the Overture repository) we used for case study is the fixed one which means that the inconsistency we found was not found in~\cite{kenneth:ifm2013}.}
+
+% Points of discussion:
+% (1) Automation: Is the encoding can be automated? partly or fully? 
+% (2) Patterns: What patterns are repeated used in encoding?
+
