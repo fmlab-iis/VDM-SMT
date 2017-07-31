@@ -1,0 +1,12 @@
+As an overall result of our case studies, the results showed that our approach can efficiently discharge the significant part of POs of a VDM-SL model. In the first case study (Abstracted Pacemaker), we discharged all nine POs; in the second case study, we discharged 16 POs our of total 27 POs (about 59\%). To increase the percentage of discharged POs, we may apply different encoding, even limited to finite types such as BitVector, to solve remaining POs in the Telephone Exchange case study.
+
+% Usability and Applicability of the Encode Style
+From our experiences, the cost and complexity of encoding varies from specifications in a VDM-SL model. Usually, the complexity of encoded formulas depends on the complexity of VDM-SL types. For example, natural number based types such as {\tt seq of nat} or {\tt map from nat to nat} have less complexity, and one may encode and solve this kind of types with SMT solvers without difficulty. On the contrary, for VDM types such as a map of sequences or a set of maps, the encoding may be difficult, and the complexity of the encoded formulas may grow a lot so that Z3 may fail to check the satisfiability.
+
+We have found some encoding patterns through the case studies. For example, the encoding of union type and quote type with user-defined types or enumeration type, and the encoding of maps and sequences with uninterpreted functions or arrays, are useful to encoding POs of VDM-SL models. Also, the encoding patterns like the constraints on arrays to represent a sequence, set inclusion of indices of a sequence, or set inclusion of domain/range of a map, are also useful. In our case studies, these encoding patterns are applied multiple times. 
+
+% Automation of the encoding style and strategy
+Though the encoding patterns are useful, applying the encoding patterns still depends on the specification of VDM models because the encoding patterns are not systemic or syntax-based at this point. Considering automated encoding of POs with related context information, the encoding of types may be fine, but encoding expressions remains difficult and rely on manual assistances may be needed.
+
+% conclusion and future work
+As initial results, it is recognized that discharging POs using SMT solvers is efficient, and the counterexample generation of SMT solvers is useful for correcting inconsistency of VDM models. Currently, the encoding is done by hand. As for future work, we are working on systematic encoding patterns and automated encoding for conducting more case studies.
