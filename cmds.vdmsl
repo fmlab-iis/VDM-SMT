@@ -21,4 +21,12 @@ functions
 times_count : CMD_series -> CMD_times
 times_count(a) == { <R> |-> len [ i | i in set inds a & a(i)=<R> ], <L> |-> len [ i | i in set inds a & a(i)=<L> ] };
 
+-- Tests
+values
+c0:CMD_series = [];
+c1 = [<R>];
+c2 = c1 ~ [<R>,<L>,<R>,<L>,<R>];
+c2 = []
+
+
 end CMDS
